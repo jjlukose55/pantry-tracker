@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grist Food Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        input, button, select {
+            border-radius: 8px;
+            border: 1px solid #d1d5db;
+        }
+        button {
+            transition: background-color 0.3s, transform 0.1s;
+        }
+        button:hover {
+            transform: translateY(-1px);
+        }
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+        th, td {
+            border: 0;
+            padding: 12px;
+        }
+        th {
+            background-color: #f3f4f6;
+            text-transform: uppercase;
+            font-weight: 600;
+            color: #4b5563;
+        }
+        td {
+            border-bottom: 1px solid #e5e7eb;
+        }
+        tr:last-child td {
+            border-bottom: 0;
+        }
+        .edit-btn { background-color: #f97316; }
+        .delete-btn { background-color: #ef4444; }
+        .save-btn { background-color: #22c55e; }
+        .cancel-btn { background-color: #6b7280; }
+        .message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+        .backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+        .dropdown-list {
+            position: absolute;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-height: 150px;
+            overflow-y: auto;
+            z-index: 100;
+            top: 100%;
+            left: 0;
+            right: 0;
+            border: 1px solid #d1d5db;
+        }
+        .dropdown-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .dropdown-item:hover {
+            background-color: #f3f4f6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+    <div class="container mt-10">
+        <h1 class="text-4xl font-bold text-center mb-2">Grist Food Tracker 🍎</h1>
+        <p class="text-center text-gray-600 mb-6">A simple app to track food items at home.</p>
+
+        <div id="message-container"></div>
+
+        <hr class="my-6">
+
+        <h2 class="text-2xl font-bold text-center mb-4">Add New Item</h2>
+        <form id="addItemForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <input type="text" id="name" placeholder="Name" required class="p-2">
+            <input type="number" id="quantity" placeholder="Quantity" min="1" required class="p-2">
+            <input type="text" id="owner" placeholder="Owner" required class="p-2">
+            <div class="relative">
+                <input type="text" id="locationName" placeholder="Location" required class="p-2 w-full">
+                <input type="hidden" id="locationId">
+                <div id="locationDropdown" class="dropdown-list hidden"></div>
+            </div>
+            <input type="date" id="insertion" placeholder="Insertion Date" required class="p-2">
+            <input type="date" id="expiration" placeholder="Expiration Date" required class="p-2">
+            <div class="lg:col-span-1">
+                <label for="imageSelect" class="block text-sm font-medium text-gray-700 mb-1">Image Library</label>
+                <select id="imageSelect" class="p-2 w-full border-gray-300 rounded-lg">
+                    <option value="">-- No Image --</option>
+                </select>
+            </div>
+            <div class="lg:col-span-1">
+                <label for="imageUpload" class="block text-sm font-medium text-gray-700 mb-1">Upload New</label>
+                <input type="file" id="imageUpload" accept="image/*" class="p-2 w-full border-gray-300 rounded-lg">
+            </div>
+            <button type="submit" class="lg:col-span-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4">Add Item</button>
+        </form>
+
+        <hr class="my-6">
+
+        <h2 class="text-2xl font-bold text-center mb-4">Food Items</h2>
+        <div class="flex justify-center mb-4">
+            <button onclick="fetchData()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4">Refresh Data</button>
+        </div>
+        <div id="data-table-container" class="overflow-x-auto">
+            <p id="loading-status" class="text-center text-gray-500">Loading data...</p>
+            <table id="food-table" class="w-full">
+                <thead>
+                    <tr>
+                        <th class="text-left">Name</th>
+                        <th class="text-left">Quantity</th>
+                        <th class="text-left">Owner</th>
+                        <th class="text-left">Location</th>
+                        <th class="text-left">Insertion</th>
+                        <th class="text-left">Expiration</th>
+                        <th class="text-left">Image</th>
+                        <th class="text-left">Actions</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const messageContainer = document.getElementById('message-container');
+        let locationsData = [];
+        let attachmentsData = [];
+        let locationDropdown = document.getElementById('locationDropdown');
+        let locationInput = document.getElementById('locationName');
+        let locationIdInput = document.getElementById('locationId');
+        
+        const config = {
+            baseUrl: 'https://pantry.home.jjluk.net',
+            docId: 'doc_h2dG5eB4tC',
+            tableId: 'Food',
+            locationTableId: 'Locations',
+        };
+        
+        function showMessage(message, type = 'info') {
+            const backdrop = document.createElement('div');
+            backdrop.className = 'backdrop';
+            const messageBox = document.createElement('div');
+            messageBox.className = 'message-box';
+            messageBox.innerHTML = `
+                <p class="text-lg font-semibold">${message}</p>
+                <div class="mt-4 flex justify-end space-x-2">
+                    <button class="px-4 py-2 rounded-lg bg-gray-200 text-gray-800" onclick="this.closest('.message-box').remove(); this.closest('.backdrop').remove();">OK</button>
+                </div>
+            `;
+            messageContainer.appendChild(backdrop);
+            messageContainer.appendChild(messageBox);
+        }
+
+        function showConfirm(message, onConfirm) {
+            const backdrop = document.createElement('div');
+            backdrop.className = 'backdrop';
+            const messageBox = document.createElement('div');
+            messageBox.className = 'message-box';
+            messageBox.innerHTML = `
+                <p class="text-lg font-semibold">${message}</p>
+                <div class="mt-4 flex justify-end space-x-2">
+                    <button class="px-4 py-2 rounded-lg bg-gray-200 text-gray-800" onclick="this.closest('.message-box').remove(); this.closest('.backdrop').remove();">Cancel</button>
+                    <button class="px-4 py-2 rounded-lg bg-red-500 text-white" onclick="onConfirm(); this.closest('.message-box').remove(); this.closest('.backdrop').remove();">Delete</button>
+                </div>
+            `;
+            messageContainer.appendChild(backdrop);
+            messageContainer.appendChild(messageBox);
+            messageBox.querySelector('.bg-red-500').onclick = onConfirm;
+        }
+
+        function convertDateToISO(dateString) {
+            if (!dateString || dateString === 'N/A') return '';
+            const parts = dateString.split('/');
+            if (parts.length === 3) {
+                const [month, day, year] = parts;
+                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            }
+            return '';
+        }
+
+        async function fetchLocations() {
+            const url = `${config.baseUrl}/api/docs/${config.docId}/tables/${config.locationTableId}/records`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                const data = await response.json();
+                locationsData = data.records;
+            } catch (error) {
+                console.error('Error fetching locations:', error);
+                showMessage(`Failed to load locations: ${error.message}`);
+            }
+        }
+
+        async function fetchAttachments() {
+            const url = `${config.baseUrl}/api/docs/${config.docId}/attachments`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+                attachmentsData = await response.json();
+            } catch (error) {
+                console.error('Error fetching attachments:', error);
+                showMessage(`Failed to load image library: ${error.message}`);
+            }
+        }
+        
+        function populateImageDropdown(selectElement, selectedId = null) {
+            selectElement.innerHTML = '<option value="">-- No Image --</option>'; // Reset
+            attachmentsData.forEach(att => {
+                const option = document.createElement('option');
+                option.value = att.id;
+                option.textContent = att.fileName;
+                if (selectedId && att.id == selectedId) {
+                    option.selected = true;
+                }
+                selectElement.appendChild(option);
+            });
+        }
+        
+        locationInput.addEventListener('input', () => {
+            const searchTerm = locationInput.value.toLowerCase();
+            const filteredLocations = locationsData.filter(loc => 
+                loc.fields.Name.toLowerCase().includes(searchTerm)
+            );
+            
+            locationDropdown.innerHTML = '';
+            
+            if (filteredLocations.length > 0) {
+                locationDropdown.classList.remove('hidden');
+                filteredLocations.forEach(loc => {
+                    const item = document.createElement('div');
+                    item.className = 'dropdown-item';
+                    item.textContent = loc.fields.Name;
+                    item.dataset.locationId = loc.id;
+                    item.addEventListener('click', () => {
+                        locationInput.value = loc.fields.Name;
+                        locationIdInput.value = loc.id;
+                        locationDropdown.classList.add('hidden');
+                    });
+                    locationDropdown.appendChild(item);
+                });
+            } else {
+                locationDropdown.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!locationInput.contains(e.target) && !locationDropdown.contains(e.target)) {
+                locationDropdown.classList.add('hidden');
+            }
+        });
+        
+        async function createNewLocation(locationName) {
+            const url = `${config.baseUrl}/api/docs/${config.docId}/tables/${config.locationTableId}/records`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ records: [{ fields: { Name: locationName } }] })
+                });
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
+                const data = await response.json();
+                return data.records[0].id;
+            } catch (error) {
+                console.error('Error creating new location:', error);
+                showMessage(`Failed to create new location: ${error.message}`);
+                return null;
+            }
+        }
+
+        async function uploadFileToGrist(file) {
+            const url = `${config.baseUrl}/api/docs/${config.docId}/attachments`;
+            const formData = new FormData();
+            formData.append('upload', file);
+            try {
+                const response = await fetch(url, { method: 'POST', body: formData });
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
+                const data = await response.json();
+                return data[0].id; // Return the attachment ID from the array response
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                showMessage(`Failed to upload image: ${error.message}`);
+                return null;
+            }
+        }
+
+        async function fetchData() {
+            const loadingStatus = document.getElementById('loading-status');
+            const foodTable = document.getElementById('food-table');
+            const tableBody = foodTable.querySelector('tbody');
+            const url = `${config.baseUrl}/api/docs/${config.docId}/tables/${config.tableId}/records`;
+
+            loadingStatus.textContent = 'Loading data...';
+            tableBody.innerHTML = '';
+            foodTable.style.display = 'none';
+
+            await Promise.all([fetchLocations(), fetchAttachments()]); // Fetch in parallel
+            
+            populateImageDropdown(document.getElementById('imageSelect'));
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
+                const data = await response.json();
+                
+                if (!data.records || data.records.length === 0) {
+                    loadingStatus.textContent = 'No food items found.';
+                    return;
+                }
+
+                data.records.forEach(record => {
+                    const row = document.createElement('tr');
+                    const fields = record.fields;
+                    row.dataset.rowId = record.id;
+                    row.dataset.locationId = fields.Location;
+                    row.dataset.imageId = fields.Image;
+
+                    const insertionDate = fields.Insertion ? new Date(fields.Insertion * 1000).toLocaleDateString() : 'N/A';
+                    const expirationDate = fields.Expiration ? new Date(fields.Expiration * 1000).toLocaleDateString() : 'N/A';
+                    const locationName = locationsData.find(loc => loc.id === fields.Location)?.fields.Name || 'N/A';
+                    const imageUrl = fields.Image ? `${config.baseUrl}/api/docs/${config.docId}/attachments/${fields.Image}/download` : null;
+
+                    row.innerHTML = `
+                        <td class="whitespace-nowrap">${fields.Name || 'N/A'}</td>
+                        <td class="text-right">${fields.Quantity || 0}</td>
+                        <td>${fields.Owner || 'N/A'}</td>
+                        <td>${locationName}</td>
+                        <td class="whitespace-nowrap">${insertionDate}</td>
+                        <td class="whitespace-nowrap">${expirationDate}</td>
+                        <td>${imageUrl ? `<a href="${imageUrl}" target="_blank" class="text-blue-500 hover:underline">View Image</a>` : 'N/A'}</td>
+                        <td class="actions-cell flex space-x-2">
+                            <button class="edit-btn text-white py-1 px-3 rounded-lg text-sm">Edit</button>
+                            <button class="delete-btn text-white py-1 px-3 rounded-lg text-sm">Delete</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                loadingStatus.textContent = '';
+                foodTable.style.display = 'table';
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                loadingStatus.textContent = `Error loading data: ${error.message}`;
+            }
+        }
+
+        document.getElementById('addItemForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const locationName = locationInput.value.trim();
+            let locationId = locationIdInput.value;
+
+            const existingLocation = locationsData.find(loc => loc.fields.Name.toLowerCase() === locationName.toLowerCase());
+            if (!existingLocation) {
+                locationId = await createNewLocation(locationName);
+                if (!locationId) return;
+            } else {
+                locationId = existingLocation.id;
+            }
+
+            const imageUploadInput = document.getElementById('imageUpload');
+            const imageSelect = document.getElementById('imageSelect');
+            let imageId = null;
+
+            if (imageUploadInput.files[0]) {
+                const loadingStatus = document.getElementById('loading-status');
+                loadingStatus.textContent = 'Uploading image...';
+                imageId = await uploadFileToGrist(imageUploadInput.files[0]);
+                if (!imageId) {
+                    loadingStatus.textContent = 'Error uploading image.';
+                    return;
+                }
+                loadingStatus.textContent = '';
+            } else if (imageSelect.value) {
+                imageId = parseInt(imageSelect.value, 10);
+            }
+
+            const newItem = {
+                Name: document.getElementById('name').value,
+                Quantity: parseInt(document.getElementById('quantity').value, 10),
+                Owner: document.getElementById('owner').value,
+                Location: [locationId],
+                Insertion: document.getElementById('insertion').value,
+                Expiration: document.getElementById('expiration').value,
+                Image: imageId ? [imageId] : null
+            };
+
+            const url = `${config.baseUrl}/api/docs/${config.docId}/tables/${config.tableId}/records`;
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ records: [{ fields: newItem }] })
+                });
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
+                document.getElementById('addItemForm').reset();
+                locationIdInput.value = '';
+                fetchData();
+            } catch (error) {
+                console.error('Error adding item:', error);
+                showMessage(`Failed to add item: ${error.message}`);
+            }
+        });
+
+        document.getElementById('food-table').addEventListener('click', (e) => {
+            const row = e.target.closest('tr');
+            if (!row) return;
+
+            if (e.target.classList.contains('edit-btn')) makeRowEditable(row);
+            else if (e.target.classList.contains('delete-btn')) showConfirm('Are you sure you want to delete this item?', () => deleteItem(row));
+            else if (e.target.classList.contains('save-btn')) updateItem(row);
+            else if (e.target.classList.contains('cancel-btn')) fetchData();
+        });
+
+        function makeRowEditable(row) {
+            const cells = row.querySelectorAll('td');
+            const headers = ['Name', 'Quantity', 'Owner', 'Location', 'Insertion', 'Expiration'];
+            const originalLocationName = cells[3].textContent.trim();
+            const originalLocationId = row.dataset.locationId;
+            const originalImageId = row.dataset.imageId;
+
+            cells.forEach((cell, index) => {
+                if (index < headers.length) {
+                    const header = headers[index];
+                    let input;
+                    if (header === 'Quantity') {
+                        input = document.createElement('input');
+                        input.type = 'number';
+                        input.value = cells[index].textContent.trim();
+                        input.min = "1";
+                    } else if (header === 'Insertion' || header === 'Expiration') {
+                        input = document.createElement('input');
+                        input.type = 'date';
+                        input.value = convertDateToISO(cells[index].textContent.trim());
+                    } else if (header === 'Location') {
+                        const wrapper = document.createElement('div');
+                        wrapper.className = 'relative';
+                        input = document.createElement('input');
+                        input.type = 'text';
+                        input.value = originalLocationName;
+                        const hiddenIdInput = document.createElement('input');
+                        hiddenIdInput.type = 'hidden';
+                        hiddenIdInput.value = originalLocationId;
+                        const dropdownList = document.createElement('div');
+                        dropdownList.className = 'dropdown-list hidden';
+                        input.addEventListener('input', () => {
+                            const searchTerm = input.value.toLowerCase();
+                            const filtered = locationsData.filter(loc => loc.fields.Name.toLowerCase().includes(searchTerm));
+                            dropdownList.innerHTML = '';
+                            if (filtered.length > 0) {
+                                dropdownList.classList.remove('hidden');
+                                filtered.forEach(loc => {
+                                    const item = document.createElement('div');
+                                    item.className = 'dropdown-item';
+                                    item.textContent = loc.fields.Name;
+                                    item.addEventListener('click', () => {
+                                        input.value = loc.fields.Name;
+                                        hiddenIdInput.value = loc.id;
+                                        dropdownList.classList.add('hidden');
+                                    });
+                                    dropdownList.appendChild(item);
+                                });
+                            } else {
+                                dropdownList.classList.add('hidden');
+                            }
+                        });
+                        document.addEventListener('click', (e) => {
+                            if (!wrapper.contains(e.target)) dropdownList.classList.add('hidden');
+                        });
+                        wrapper.appendChild(input);
+                        wrapper.appendChild(hiddenIdInput);
+                        wrapper.appendChild(dropdownList);
+                        cell.innerHTML = '';
+                        cell.appendChild(wrapper);
+                        input.className = 'p-2 rounded-lg border w-full';
+                        return;
+                    } else {
+                        input = document.createElement('input');
+                        input.type = 'text';
+                        input.value = cells[index].textContent.trim();
+                    }
+                    input.className = 'p-2 rounded-lg border w-full';
+                    cell.innerHTML = '';
+                    cell.appendChild(input);
+                }
+            });
+
+            const imageCell = cells[cells.length - 2];
+            imageCell.innerHTML = '';
+            const select = document.createElement('select');
+            select.className = 'p-2 w-full border-gray-300 rounded-lg mb-2';
+            populateImageDropdown(select, originalImageId);
+            imageCell.appendChild(select);
+
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = 'image/*';
+            fileInput.className = 'p-2 w-full border-gray-300 rounded-lg';
+            imageCell.appendChild(fileInput);
+
+            const actionsCell = cells[cells.length - 1];
+            actionsCell.innerHTML = `
+                <button class="save-btn text-white py-1 px-3 rounded-lg text-sm">Save</button>
+                <button class="cancel-btn text-white py-1 px-3 rounded-lg text-sm">Cancel</button>
+            `;
+        }
+        
+        async function updateItem(row) {
+            const rowId = row.dataset.rowId;
+            const cells = row.querySelectorAll('td');
+            const updatedFields = {};
+
+            const imageCell = cells[cells.length - 2];
+            const imageFileInput = imageCell.querySelector('input[type="file"]');
+            const imageSelectInput = imageCell.querySelector('select');
+            let updatedImageId = null;
+
+            if (imageFileInput.files[0]) {
+                const loadingStatus = document.getElementById('loading-status');
+                loadingStatus.textContent = 'Uploading image...';
+                updatedImageId = await uploadFileToGrist(imageFileInput.files[0]);
+                if (!updatedImageId) {
+                    loadingStatus.textContent = 'Error uploading image.';
+                    return;
+                }
+                loadingStatus.textContent = '';
+            } else if (imageSelectInput.value) {
+                updatedImageId = parseInt(imageSelectInput.value, 10);
+            }
+
+            updatedFields.Name = cells[0].querySelector('input').value;
+            updatedFields.Quantity = parseInt(cells[1].querySelector('input').value, 10);
+            updatedFields.Owner = cells[2].querySelector('input').value;
+            updatedFields.Insertion = cells[4].querySelector('input').value;
+            updatedFields.Expiration = cells[5].querySelector('input').value;
+            updatedFields.Image = updatedImageId ? [updatedImageId] : null;
+
+            const locationNameInput = cells[3].querySelector('input[type="text"]');
+            const locationIdInput = cells[3].querySelector('input[type="hidden"]');
+            const locationName = locationNameInput.value.trim();
+            let locationId = locationIdInput.value;
+
+            const existingLocation = locationsData.find(loc => loc.fields.Name.toLowerCase() === locationName.toLowerCase());
+            if (!existingLocation) {
+                locationId = await createNewLocation(locationName);
+                if (!locationId) return;
+            } else {
+                locationId = existingLocation.id;
+            }
+            updatedFields.Location = [locationId];
+
+            const url = `${config.baseUrl}/api/docs/${config.docId}/tables/${config.tableId}/records`;
+            try {
+                const response = await fetch(url, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ records: [{ id: rowId, fields: updatedFields }] })
+                });
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
+                fetchData();
+            } catch (error) {
+                console.error('Error updating item:', error);
+                showMessage(`Failed to update item: ${error.message}`);
+            }
+        }
+
+        async function deleteItem(row) {
+            const rowId = row.dataset.rowId;
+            const url = `${config.baseUrl}/api/docs/${config.docId}/tables/${config.tableId}/records`;
+            try {
+                const response = await fetch(url, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: [rowId] })
+                });
+                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
+                fetchData();
+            } catch (error) {
+                console.error('Error deleting item:', error);
+                showMessage(`Failed to delete item: ${error.message}`);
+            }
+        }
+
+        window.onload = function() {
+            fetchData();
+        };
+    </script>
+</body>
+</html>
