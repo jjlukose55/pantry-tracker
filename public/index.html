@@ -7,94 +7,25 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-        .container {
-            max-width: 800px;
-            margin: auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        }
-        input, button, select {
-            border-radius: 8px;
-            border: 1px solid #d1d5db;
-        }
-        button {
-            transition: background-color 0.3s, transform 0.1s;
-        }
-        button:hover {
-            transform: translateY(-1px);
-        }
-        table {
-            border-collapse: separate;
-            border-spacing: 0;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid #e5e7eb;
-        }
-        th, td {
-            border: 0;
-            padding: 12px;
-        }
-        th {
-            background-color: #f3f4f6;
-            text-transform: uppercase;
-            font-weight: 600;
-            color: #4b5563;
-        }
-        td {
-            border-bottom: 1px solid #e5e7eb;
-        }
-        tr:last-child td {
-            border-bottom: 0;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+        input, button, select { border-radius: 8px; border: 1px solid #d1d5db; }
+        button { transition: background-color 0.3s, transform 0.1s; }
+        button:hover { transform: translateY(-1px); }
+        table { border-collapse: separate; border-spacing: 0; border-radius: 8px; overflow: hidden; border: 1px solid #e5e7eb; }
+        th, td { border: 0; padding: 12px; }
+        th { background-color: #f3f4f6; text-transform: uppercase; font-weight: 600; color: #4b5563; }
+        td { border-bottom: 1px solid #e5e7eb; }
+        tr:last-child td { border-bottom: 0; }
         .edit-btn { background-color: #f97316; }
         .delete-btn { background-color: #ef4444; }
         .save-btn { background-color: #22c55e; }
         .cancel-btn { background-color: #6b7280; }
-        .message-box {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #fff;
-            padding: 24px;
-            border-radius: 8px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-            z-index: 1000;
-        }
-        .backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 999;
-        }
-        .dropdown-list {
-            position: absolute;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-            max-height: 150px;
-            overflow-y: auto;
-            z-index: 100;
-            top: 100%;
-            left: 0;
-            right: 0;
-            border: 1px solid #d1d5db;
-        }
-        .dropdown-item {
-            padding: 8px 12px;
-            cursor: pointer;
-        }
-        .dropdown-item:hover {
-            background-color: #f3f4f6;
-        }
+        .message-box { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background-color: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2); z-index: 1000; }
+        .backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 999; }
+        .dropdown-list { position: absolute; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); max-height: 150px; overflow-y: auto; z-index: 100; top: 100%; left: 0; right: 0; border: 1px solid #d1d5db; }
+        .dropdown-item { padding: 8px 12px; cursor: pointer; }
+        .dropdown-item:hover { background-color: #f3f4f6; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-900">
@@ -103,7 +34,6 @@
         <p class="text-center text-gray-600 mb-6">A simple app to track food items at home.</p>
 
         <div id="message-container"></div>
-
         <hr class="my-6">
 
         <h2 class="text-2xl font-bold text-center mb-4">Add New Item</h2>
@@ -116,23 +46,22 @@
                 <input type="hidden" id="locationId">
                 <div id="locationDropdown" class="dropdown-list hidden"></div>
             </div>
-            <input type="date" id="insertion" placeholder="Insertion Date" required class="p-2">
-            <input type="date" id="expiration" placeholder="Expiration Date" required class="p-2">
             <div class="lg:col-span-1">
-                <label for="imageSelect" class="block text-sm font-medium text-gray-700 mb-1">Image Library</label>
-                <select id="imageSelect" class="p-2 w-full border-gray-300 rounded-lg">
-                    <option value="">-- No Image --</option>
-                </select>
+                <label for="insertion" class="block text-sm font-medium text-gray-700 mb-1">Insertion Date</label>
+                <input type="date" id="insertion" required class="p-2 w-full">
             </div>
             <div class="lg:col-span-1">
-                <label for="imageUpload" class="block text-sm font-medium text-gray-700 mb-1">Upload New</label>
-                <input type="file" id="imageUpload" accept="image/*" class="p-2 w-full border-gray-300 rounded-lg">
+                <label for="expiration" class="block text-sm font-medium text-gray-700 mb-1">Expiration Date</label>
+                <input type="date" id="expiration" required class="p-2 w-full">
+            </div>
+            <div class="lg:col-span-2">
+                <label for="imageUpload" class="block text-sm font-medium text-gray-700 mb-1">Take Item Photo</label>
+                <input type="file" id="imageUpload" accept="image/*" capture="environment" class="p-2 w-full border-gray-300 rounded-lg">
             </div>
             <button type="submit" class="lg:col-span-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4">Add Item</button>
         </form>
 
         <hr class="my-6">
-
         <h2 class="text-2xl font-bold text-center mb-4">Food Items</h2>
         <div class="flex justify-center mb-4">
             <button onclick="fetchData()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4">Refresh Data</button>
@@ -165,29 +94,29 @@
         let locationInput = document.getElementById('locationName');
         let locationIdInput = document.getElementById('locationId');
         
-        // Configuration for the backend server
-        const apiConfig = {
-            baseUrl: 'http://localhost:3001'
-        };
-
-        // Configuration for Grist to construct download URLs
-        // This is still needed because the backend doesn't proxy image downloads
-        const gristConfig = {
-            baseUrl: 'https://pantry.home.jjluk.net', // Your Grist instance URL
-            docId: 'doc_h2dG5eB4tC'                   // Your Grist Doc ID
+        const config = {
+            baseUrl: 'http://localhost:3001',
+            gristImageUrlBase: 'https://grist.home.jjluk.net', // Your Grist instance URL
+            docId: '3bkG8senLEgK8n7df8U9vW', // Your Grist Doc ID
         };
         
-        function showMessage(message, type = 'info') {
+        function showMessage(message) {
             const backdrop = document.createElement('div');
             backdrop.className = 'backdrop';
             const messageBox = document.createElement('div');
             messageBox.className = 'message-box';
             messageBox.innerHTML = `
                 <p class="text-lg font-semibold">${message}</p>
-                <div class="mt-4 flex justify-end space-x-2">
-                    <button class="px-4 py-2 rounded-lg bg-gray-200 text-gray-800" onclick="this.closest('.message-box').remove(); this.closest('.backdrop').remove();">OK</button>
+                <div class="mt-4 flex justify-end">
+                    <button class="ok-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-800">OK</button>
                 </div>
             `;
+            
+            messageBox.querySelector('.ok-btn').addEventListener('click', () => {
+                messageBox.remove();
+                backdrop.remove();
+            });
+
             messageContainer.appendChild(backdrop);
             messageContainer.appendChild(messageBox);
         }
@@ -200,30 +129,45 @@
             messageBox.innerHTML = `
                 <p class="text-lg font-semibold">${message}</p>
                 <div class="mt-4 flex justify-end space-x-2">
-                    <button class="px-4 py-2 rounded-lg bg-gray-200 text-gray-800" onclick="this.closest('.message-box').remove(); this.closest('.backdrop').remove();">Cancel</button>
-                    <button class="px-4 py-2 rounded-lg bg-red-500 text-white" onclick="onConfirm(); this.closest('.message-box').remove(); this.closest('.backdrop').remove();">Delete</button>
+                    <button class="cancel-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-800">Cancel</button>
+                    <button class="confirm-btn px-4 py-2 rounded-lg bg-red-500 text-white">Delete</button>
                 </div>
             `;
+
+            const close = () => {
+                messageBox.remove();
+                backdrop.remove();
+            };
+
+            messageBox.querySelector('.cancel-btn').addEventListener('click', close);
+            messageBox.querySelector('.confirm-btn').addEventListener('click', () => {
+                onConfirm();
+                close();
+            });
+
             messageContainer.appendChild(backdrop);
             messageContainer.appendChild(messageBox);
-            messageBox.querySelector('.bg-red-500').onclick = onConfirm;
         }
 
         function convertDateToISO(dateString) {
             if (!dateString || dateString === 'N/A') return '';
             const parts = dateString.split('/');
-            if (parts.length === 3) {
-                const [month, day, year] = parts;
-                return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+            // Handles both MM/DD/YYYY and M/D/YYYY
+            return parts.length === 3 ? `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}` : '';
+        }
+
+        async function fetchApi(endpoint) {
+            const response = await fetch(`${config.baseUrl}${endpoint}`);
+            if (!response.ok) {
+                const errorBody = await response.text();
+                throw new Error(`HTTP error! Status: ${response.status} on ${endpoint} - ${errorBody}`);
             }
-            return '';
+            return response.json();
         }
 
         async function fetchLocations() {
             try {
-                const response = await fetch(`${apiConfig.baseUrl}/locations`);
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                const data = await response.json();
+                const data = await fetchApi('/locations');
                 locationsData = data.records;
             } catch (error) {
                 console.error('Error fetching locations:', error);
@@ -233,9 +177,8 @@
 
         async function fetchAttachments() {
             try {
-                const response = await fetch(`${apiConfig.baseUrl}/attachments`);
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-                attachmentsData = await response.json();
+                const data = await fetchApi('/attachments');
+                attachmentsData = data.records;
             } catch (error) {
                 console.error('Error fetching attachments:', error);
                 showMessage(`Failed to load image library: ${error.message}`);
@@ -243,43 +186,32 @@
         }
         
         function populateImageDropdown(selectElement, selectedId = null) {
-            selectElement.innerHTML = '<option value="">-- No Image --</option>'; // Reset
+            selectElement.innerHTML = '<option value="">-- No Image --</option>';
             attachmentsData.forEach(att => {
                 const option = document.createElement('option');
                 option.value = att.id;
-                option.textContent = att.fileName;
-                if (selectedId && att.id == selectedId) {
-                    option.selected = true;
-                }
+                option.textContent = att.fields.fileName;
+                if (selectedId && att.id == selectedId) option.selected = true;
                 selectElement.appendChild(option);
             });
         }
         
         locationInput.addEventListener('input', () => {
             const searchTerm = locationInput.value.toLowerCase();
-            const filteredLocations = locationsData.filter(loc => 
-                loc.fields.Name.toLowerCase().includes(searchTerm)
-            );
-            
+            const filteredLocations = locationsData.filter(loc => loc.fields.Name.toLowerCase().includes(searchTerm));
             locationDropdown.innerHTML = '';
-            
-            if (filteredLocations.length > 0) {
-                locationDropdown.classList.remove('hidden');
-                filteredLocations.forEach(loc => {
-                    const item = document.createElement('div');
-                    item.className = 'dropdown-item';
-                    item.textContent = loc.fields.Name;
-                    item.dataset.locationId = loc.id;
-                    item.addEventListener('click', () => {
-                        locationInput.value = loc.fields.Name;
-                        locationIdInput.value = loc.id;
-                        locationDropdown.classList.add('hidden');
-                    });
-                    locationDropdown.appendChild(item);
-                });
-            } else {
-                locationDropdown.classList.add('hidden');
-            }
+            locationDropdown.classList.toggle('hidden', filteredLocations.length === 0);
+            filteredLocations.forEach(loc => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.textContent = loc.fields.Name;
+                item.onclick = () => {
+                    locationInput.value = loc.fields.Name;
+                    locationIdInput.value = loc.id;
+                    locationDropdown.classList.add('hidden');
+                };
+                locationDropdown.appendChild(item);
+            });
         });
 
         document.addEventListener('click', (e) => {
@@ -290,15 +222,14 @@
         
         async function createNewLocation(locationName) {
             try {
-                const response = await fetch(`${apiConfig.baseUrl}/locations`, {
+                const response = await fetch(`${config.baseUrl}/locations`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ Name: locationName }) // Send only the fields
+                    body: JSON.stringify({ Name: locationName })
                 });
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
                 const data = await response.json();
-                // Assuming the backend proxies the Grist response for creating records
-                return data.records[0].id;
+                return data.records[0].id; 
             } catch (error) {
                 console.error('Error creating new location:', error);
                 showMessage(`Failed to create new location: ${error.message}`);
@@ -306,14 +237,14 @@
             }
         }
 
-        async function uploadFileToGrist(file) {
+        async function uploadAttachment(file) {
             const formData = new FormData();
-            formData.append('file', file); // Use 'file' to match the backend's multer config
+            formData.append('file', file);
             try {
-                const response = await fetch(`${apiConfig.baseUrl}/attachments`, { method: 'POST', body: formData });
+                const response = await fetch(`${config.baseUrl}/attachments`, { method: 'POST', body: formData });
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
                 const data = await response.json();
-                return data[0].id; // Return the attachment ID from the array response
+                return data[0];
             } catch (error) {
                 console.error('Error uploading file:', error);
                 showMessage(`Failed to upload image: ${error.message}`);
@@ -323,21 +254,18 @@
 
         async function fetchData() {
             const loadingStatus = document.getElementById('loading-status');
-            const foodTable = document.getElementById('food-table');
-            const tableBody = foodTable.querySelector('tbody');
+            const tableBody = document.querySelector('#food-table tbody');
 
             loadingStatus.textContent = 'Loading data...';
             tableBody.innerHTML = '';
-            foodTable.style.display = 'none';
-
-            await Promise.all([fetchLocations(), fetchAttachments()]); // Fetch in parallel
-            
-            populateImageDropdown(document.getElementById('imageSelect'));
+            document.getElementById('food-table').style.display = 'none';
 
             try {
-                const response = await fetch(`${apiConfig.baseUrl}/food`);
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
-                const data = await response.json();
+                // Fetch attachments first for the edit dropdown, then the rest
+                await fetchAttachments();
+                await fetchLocations();
+                
+                const data = await fetchApi('/food');
                 
                 if (!data.records || data.records.length === 0) {
                     loadingStatus.textContent = 'No food items found.';
@@ -345,38 +273,35 @@
                 }
 
                 data.records.forEach(record => {
-                    const row = document.createElement('tr');
-                    const fields = record.fields;
-                    row.dataset.rowId = record.id;
+                    const row = tableBody.insertRow();
+                    const { id, fields } = record;
+                    row.dataset.rowId = id;
                     row.dataset.locationId = fields.Location;
-                    row.dataset.imageId = fields.Image;
+                    row.dataset.imageId = fields.Image ? fields.Image[1] : '';
 
                     const insertionDate = fields.Insertion ? new Date(fields.Insertion * 1000).toLocaleDateString() : 'N/A';
                     const expirationDate = fields.Expiration ? new Date(fields.Expiration * 1000).toLocaleDateString() : 'N/A';
                     const locationName = locationsData.find(loc => loc.id === fields.Location)?.fields.Name || 'N/A';
-                    
-                    // Construct image URL using the public Grist info
-                    const imageUrl = fields.Image ? `${gristConfig.baseUrl}/api/docs/${gristConfig.docId}/attachments/${fields.Image}/download` : null;
+                    const imageId = fields.Image ? fields.Image[1] : null;
+                    const imageUrl = imageId ? `${config.gristImageUrlBase}/api/docs/${config.docId}/attachments/${imageId}/download` : null;
 
                     row.innerHTML = `
-                        <td class="whitespace-nowrap">${fields.Name || 'N/A'}</td>
+                        <td>${fields.Name || 'N/A'}</td>
                         <td class="text-right">${fields.Quantity || 0}</td>
                         <td>${fields.Owner || 'N/A'}</td>
                         <td>${locationName}</td>
-                        <td class="whitespace-nowrap">${insertionDate}</td>
-                        <td class="whitespace-nowrap">${expirationDate}</td>
+                        <td>${insertionDate}</td>
+                        <td>${expirationDate}</td>
                         <td>${imageUrl ? `<a href="${imageUrl}" target="_blank" class="text-blue-500 hover:underline">View Image</a>` : 'N/A'}</td>
-                        <td class="actions-cell flex space-x-2">
+                        <td class="flex space-x-2">
                             <button class="edit-btn text-white py-1 px-3 rounded-lg text-sm">Edit</button>
                             <button class="delete-btn text-white py-1 px-3 rounded-lg text-sm">Delete</button>
                         </td>
                     `;
-                    tableBody.appendChild(row);
                 });
 
                 loadingStatus.textContent = '';
-                foodTable.style.display = 'table';
-
+                document.getElementById('food-table').style.display = 'table';
             } catch (error) {
                 console.error('Error fetching data:', error);
                 loadingStatus.textContent = `Error loading data: ${error.message}`;
@@ -385,55 +310,48 @@
 
         document.getElementById('addItemForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const locationName = locationInput.value.trim();
-            let locationId = locationIdInput.value;
-
-            const existingLocation = locationsData.find(loc => loc.fields.Name.toLowerCase() === locationName.toLowerCase());
-            if (!existingLocation) {
-                locationId = await createNewLocation(locationName);
-                if (!locationId) return;
-            } else {
-                locationId = existingLocation.id;
-            }
+            let location = locationsData.find(loc => loc.fields.Name.toLowerCase() === locationName.toLowerCase());
+            let locationId = location ? location.id : await createNewLocation(locationName);
+            if (!locationId) return;
 
             const imageUploadInput = document.getElementById('imageUpload');
-            const imageSelect = document.getElementById('imageSelect');
             let imageId = null;
 
             if (imageUploadInput.files[0]) {
-                const loadingStatus = document.getElementById('loading-status');
-                loadingStatus.textContent = 'Uploading image...';
-                imageId = await uploadFileToGrist(imageUploadInput.files[0]);
-                if (!imageId) {
-                    loadingStatus.textContent = 'Error uploading image.';
+                document.getElementById('loading-status').textContent = 'Uploading image...';
+                imageId = await uploadAttachment(imageUploadInput.files[0]);
+                if (imageId === null) {
+                    document.getElementById('loading-status').textContent = 'Error during image upload.';
                     return;
                 }
-                loadingStatus.textContent = '';
-            } else if (imageSelect.value) {
-                imageId = parseInt(imageSelect.value, 10);
+                document.getElementById('loading-status').textContent = '';
             }
 
             const newItem = {
                 Name: document.getElementById('name').value,
                 Quantity: parseInt(document.getElementById('quantity').value, 10),
                 Owner: document.getElementById('owner').value,
-                Location: [locationId],
+                Location: locationId,
                 Insertion: document.getElementById('insertion').value,
                 Expiration: document.getElementById('expiration').value,
-                Image: imageId ? [imageId] : null
+                Image: imageId ? ["L", imageId] : null
             };
 
             try {
-                const response = await fetch(`${apiConfig.baseUrl}/food`, {
+                const response = await fetch(`${config.baseUrl}/food`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(newItem) // Send only the fields object
+                    body: JSON.stringify(newItem)
                 });
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}`);
+                }
+
                 document.getElementById('addItemForm').reset();
                 locationIdInput.value = '';
-                fetchData();
+                await fetchData();
             } catch (error) {
                 console.error('Error adding item:', error);
                 showMessage(`Failed to add item: ${error.message}`);
@@ -443,7 +361,6 @@
         document.getElementById('food-table').addEventListener('click', (e) => {
             const row = e.target.closest('tr');
             if (!row) return;
-
             if (e.target.classList.contains('edit-btn')) makeRowEditable(row);
             else if (e.target.classList.contains('delete-btn')) showConfirm('Are you sure you want to delete this item?', () => deleteItem(row));
             else if (e.target.classList.contains('save-btn')) updateItem(row);
@@ -451,93 +368,75 @@
         });
 
         function makeRowEditable(row) {
-            const cells = row.querySelectorAll('td');
-            const headers = ['Name', 'Quantity', 'Owner', 'Location', 'Insertion', 'Expiration'];
-            const originalLocationName = cells[3].textContent.trim();
-            const originalLocationId = row.dataset.locationId;
-            const originalImageId = row.dataset.imageId;
+            const cells = Array.from(row.cells);
 
-            cells.forEach((cell, index) => {
-                if (index < headers.length) {
-                    const header = headers[index];
-                    let input;
-                    if (header === 'Quantity') {
-                        input = document.createElement('input');
-                        input.type = 'number';
-                        input.value = cells[index].textContent.trim();
-                        input.min = "1";
-                    } else if (header === 'Insertion' || header === 'Expiration') {
-                        input = document.createElement('input');
-                        input.type = 'date';
-                        input.value = convertDateToISO(cells[index].textContent.trim());
-                    } else if (header === 'Location') {
-                        const wrapper = document.createElement('div');
-                        wrapper.className = 'relative';
-                        input = document.createElement('input');
-                        input.type = 'text';
-                        input.value = originalLocationName;
-                        const hiddenIdInput = document.createElement('input');
-                        hiddenIdInput.type = 'hidden';
-                        hiddenIdInput.value = originalLocationId;
-                        const dropdownList = document.createElement('div');
-                        dropdownList.className = 'dropdown-list hidden';
-                        input.addEventListener('input', () => {
-                            const searchTerm = input.value.toLowerCase();
-                            const filtered = locationsData.filter(loc => loc.fields.Name.toLowerCase().includes(searchTerm));
-                            dropdownList.innerHTML = '';
-                            if (filtered.length > 0) {
-                                dropdownList.classList.remove('hidden');
-                                filtered.forEach(loc => {
-                                    const item = document.createElement('div');
-                                    item.className = 'dropdown-item';
-                                    item.textContent = loc.fields.Name;
-                                    item.addEventListener('click', () => {
-                                        input.value = loc.fields.Name;
-                                        hiddenIdInput.value = loc.id;
-                                        dropdownList.classList.add('hidden');
-                                    });
-                                    dropdownList.appendChild(item);
-                                });
-                            } else {
-                                dropdownList.classList.add('hidden');
-                            }
-                        });
-                        document.addEventListener('click', (e) => {
-                            if (!wrapper.contains(e.target)) dropdownList.classList.add('hidden');
-                        });
-                        wrapper.appendChild(input);
-                        wrapper.appendChild(hiddenIdInput);
-                        wrapper.appendChild(dropdownList);
-                        cell.innerHTML = '';
-                        cell.appendChild(wrapper);
-                        input.className = 'p-2 rounded-lg border w-full';
-                        return;
-                    } else {
-                        input = document.createElement('input');
-                        input.type = 'text';
-                        input.value = cells[index].textContent.trim();
-                    }
-                    input.className = 'p-2 rounded-lg border w-full';
-                    cell.innerHTML = '';
-                    cell.appendChild(input);
-                }
+            // Text and Number Inputs
+            [0, 1, 2].forEach(i => {
+                const input = document.createElement('input');
+                input.type = i === 1 ? 'number' : 'text';
+                input.value = cells[i].textContent.trim();
+                input.className = 'p-2 rounded-lg border w-full';
+                cells[i].innerHTML = '';
+                cells[i].appendChild(input);
             });
 
-            const imageCell = cells[cells.length - 2];
+            // Date Inputs
+            [4, 5].forEach(i => {
+                const input = document.createElement('input');
+                input.type = 'date';
+                input.value = convertDateToISO(cells[i].textContent.trim());
+                input.className = 'p-2 rounded-lg border w-full';
+                cells[i].innerHTML = '';
+                cells[i].appendChild(input);
+            });
+
+            // Location Input with Dropdown
+            const locationCell = cells[3];
+            const originalLocationName = locationCell.textContent.trim();
+            locationCell.innerHTML = '';
+            const locationWrapper = document.createElement('div');
+            locationWrapper.className = 'relative';
+            const locationEditInput = document.createElement('input');
+            locationEditInput.type = 'text';
+            locationEditInput.value = originalLocationName;
+            locationEditInput.className = 'p-2 rounded-lg border w-full';
+            const locationEditDropdown = document.createElement('div');
+            locationEditDropdown.className = 'dropdown-list hidden';
+            locationWrapper.append(locationEditInput, locationEditDropdown);
+            locationCell.appendChild(locationWrapper);
+
+            locationEditInput.addEventListener('input', () => {
+                const searchTerm = locationEditInput.value.toLowerCase();
+                const filtered = locationsData.filter(loc => loc.fields.Name.toLowerCase().includes(searchTerm));
+                locationEditDropdown.innerHTML = '';
+                locationEditDropdown.classList.toggle('hidden', filtered.length === 0);
+                filtered.forEach(loc => {
+                    const item = document.createElement('div');
+                    item.className = 'dropdown-item';
+                    item.textContent = loc.fields.Name;
+                    item.onclick = () => {
+                        locationEditInput.value = loc.fields.Name;
+                        locationEditDropdown.classList.add('hidden');
+                    };
+                    locationEditDropdown.appendChild(item);
+                });
+            });
+
+            // Image Input
+            const imageCell = cells[6];
+            const originalImageId = row.dataset.imageId;
             imageCell.innerHTML = '';
             const select = document.createElement('select');
             select.className = 'p-2 w-full border-gray-300 rounded-lg mb-2';
             populateImageDropdown(select, originalImageId);
-            imageCell.appendChild(select);
-
             const fileInput = document.createElement('input');
             fileInput.type = 'file';
             fileInput.accept = 'image/*';
             fileInput.className = 'p-2 w-full border-gray-300 rounded-lg';
-            imageCell.appendChild(fileInput);
+            imageCell.append(select, fileInput);
 
-            const actionsCell = cells[cells.length - 1];
-            actionsCell.innerHTML = `
+            // Action Buttons
+            cells[7].innerHTML = `
                 <button class="save-btn text-white py-1 px-3 rounded-lg text-sm">Save</button>
                 <button class="cancel-btn text-white py-1 px-3 rounded-lg text-sm">Cancel</button>
             `;
@@ -545,56 +444,49 @@
         
         async function updateItem(row) {
             const rowId = row.dataset.rowId;
-            const cells = row.querySelectorAll('td');
-            const updatedFields = {};
-
-            const imageCell = cells[cells.length - 2];
-            const imageFileInput = imageCell.querySelector('input[type="file"]');
-            const imageSelectInput = imageCell.querySelector('select');
-            let updatedImageId = null;
+            const cells = row.cells;
+            
+            const imageFileInput = cells[6].querySelector('input[type="file"]');
+            const imageSelectInput = cells[6].querySelector('select');
+            let imageId = null;
 
             if (imageFileInput.files[0]) {
-                const loadingStatus = document.getElementById('loading-status');
-                loadingStatus.textContent = 'Uploading image...';
-                updatedImageId = await uploadFileToGrist(imageFileInput.files[0]);
-                if (!updatedImageId) {
-                    loadingStatus.textContent = 'Error uploading image.';
+                document.getElementById('loading-status').textContent = 'Uploading image...';
+                imageId = await uploadAttachment(imageFileInput.files[0]);
+                if (imageId === null) {
+                    document.getElementById('loading-status').textContent = 'Error uploading image.';
                     return;
                 }
-                loadingStatus.textContent = '';
+                document.getElementById('loading-status').textContent = '';
             } else if (imageSelectInput.value) {
-                updatedImageId = parseInt(imageSelectInput.value, 10);
+                imageId = parseInt(imageSelectInput.value, 10);
             }
+            
+            const locationName = cells[3].querySelector('input').value.trim();
+            const location = locationsData.find(l => l.fields.Name.toLowerCase() === locationName.toLowerCase());
+            const locationId = location ? location.id : await createNewLocation(locationName);
+            if (!locationId) return;
 
-            updatedFields.Name = cells[0].querySelector('input').value;
-            updatedFields.Quantity = parseInt(cells[1].querySelector('input').value, 10);
-            updatedFields.Owner = cells[2].querySelector('input').value;
-            updatedFields.Insertion = cells[4].querySelector('input').value;
-            updatedFields.Expiration = cells[5].querySelector('input').value;
-            updatedFields.Image = updatedImageId ? [updatedImageId] : null;
-
-            const locationNameInput = cells[3].querySelector('input[type="text"]');
-            const locationIdInput = cells[3].querySelector('input[type="hidden"]');
-            const locationName = locationNameInput.value.trim();
-            let locationId = locationIdInput.value;
-
-            const existingLocation = locationsData.find(loc => loc.fields.Name.toLowerCase() === locationName.toLowerCase());
-            if (!existingLocation) {
-                locationId = await createNewLocation(locationName);
-                if (!locationId) return;
-            } else {
-                locationId = existingLocation.id;
-            }
-            updatedFields.Location = [locationId];
+            const updatedFields = {
+                Name: cells[0].querySelector('input').value,
+                Quantity: parseInt(cells[1].querySelector('input').value, 10),
+                Owner: cells[2].querySelector('input').value,
+                Location: locationId,
+                Insertion: cells[4].querySelector('input').value,
+                Expiration: cells[5].querySelector('input').value,
+                Image: imageId ? ["L", imageId] : null
+            };
 
             try {
-                const response = await fetch(`${apiConfig.baseUrl}/food/${rowId}`, {
+                const response = await fetch(`${config.baseUrl}/food/${rowId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(updatedFields) // Send only the fields object
+                    body: JSON.stringify(updatedFields)
                 });
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
-                fetchData();
+                 if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}`);
+                }
+                await fetchData();
             } catch (error) {
                 console.error('Error updating item:', error);
                 showMessage(`Failed to update item: ${error.message}`);
@@ -604,20 +496,18 @@
         async function deleteItem(row) {
             const rowId = row.dataset.rowId;
             try {
-                const response = await fetch(`${apiConfig.baseUrl}/food/${rowId}`, {
-                    method: 'DELETE' // No body is needed
-                });
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
-                fetchData();
+                const response = await fetch(`${config.baseUrl}/food/${rowId}`, { method: 'DELETE' });
+                if (!response.ok) {
+                    throw new Error(`Server responded with ${response.status}`);
+                }
+                await fetchData();
             } catch (error) {
                 console.error('Error deleting item:', error);
                 showMessage(`Failed to delete item: ${error.message}`);
             }
         }
 
-        window.onload = function() {
-            fetchData();
-        };
+        window.onload = fetchData;
     </script>
 </body>
 </html>
