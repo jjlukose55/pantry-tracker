@@ -1,2 +1,2 @@
 # pantry-tracker
-A simple pantry tracker application that uses Grist on thebackend. 
+A simple vibe-coded pantry tracker that uses Grist on the backend. 
