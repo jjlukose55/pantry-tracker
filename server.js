@@ -42,7 +42,7 @@ const port = process.env.PORT || 3001;
 // Middleware
 app.use(cors());          // Allow cross-origin requests
 app.use(express.json());  // Parse JSON request bodies
-app.use(express.static(path.join(__dirname, "public"))); // Serve static files (optional)
+app.use(express.static(__dirname)); // Serve static files (optional)
 
 // Multer for handling attachments in memory
 const upload = multer({ storage: multer.memoryStorage() });
