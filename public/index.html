@@ -165,11 +165,16 @@
         let locationInput = document.getElementById('locationName');
         let locationIdInput = document.getElementById('locationId');
         
-        const config = {
-            baseUrl: 'https://pantry.home.jjluk.net',
-            docId: 'doc_h2dG5eB4tC',
-            tableId: 'Food',
-            locationTableId: 'Locations',
+        // Configuration for the backend server
+        const apiConfig = {
+            baseUrl: 'http://localhost:3001'
+        };
+
+        // Configuration for Grist to construct download URLs
+        // This is still needed because the backend doesn't proxy image downloads
+        const gristConfig = {
+            baseUrl: 'https://pantry.home.jjluk.net', // Your Grist instance URL
+            docId: 'doc_h2dG5eB4tC'                   // Your Grist Doc ID
         };
         
         function showMessage(message, type = 'info') {
@@ -215,9 +220,8 @@
         }
 
         async function fetchLocations() {
-            const url = `${config.baseUrl}/api/docs/${config.docId}/tables/${config.locationTableId}/records`;
             try {
-                const response = await fetch(url);
+                const response = await fetch(`${apiConfig.baseUrl}/locations`);
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 const data = await response.json();
                 locationsData = data.records;
@@ -228,9 +232,8 @@
         }
 
         async function fetchAttachments() {
-            const url = `${config.baseUrl}/api/docs/${config.docId}/attachments`;
             try {
-                const response = await fetch(url);
+                const response = await fetch(`${apiConfig.baseUrl}/attachments`);
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
                 attachmentsData = await response.json();
             } catch (error) {
@@ -286,15 +289,15 @@
         });
         
         async function createNewLocation(locationName) {
-            const url = `${config.baseUrl}/api/docs/${config.docId}/tables/${config.locationTableId}/records`;
             try {
-                const response = await fetch(url, {
+                const response = await fetch(`${apiConfig.baseUrl}/locations`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ records: [{ fields: { Name: locationName } }] })
+                    body: JSON.stringify({ Name: locationName }) // Send only the fields
                 });
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
                 const data = await response.json();
+                // Assuming the backend proxies the Grist response for creating records
                 return data.records[0].id;
             } catch (error) {
                 console.error('Error creating new location:', error);
@@ -304,11 +307,10 @@
         }
 
         async function uploadFileToGrist(file) {
-            const url = `${config.baseUrl}/api/docs/${config.docId}/attachments`;
             const formData = new FormData();
-            formData.append('upload', file);
+            formData.append('file', file); // Use 'file' to match the backend's multer config
             try {
-                const response = await fetch(url, { method: 'POST', body: formData });
+                const response = await fetch(`${apiConfig.baseUrl}/attachments`, { method: 'POST', body: formData });
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
                 const data = await response.json();
                 return data[0].id; // Return the attachment ID from the array response
@@ -323,7 +325,6 @@
             const loadingStatus = document.getElementById('loading-status');
             const foodTable = document.getElementById('food-table');
             const tableBody = foodTable.querySelector('tbody');
-            const url = `${config.baseUrl}/api/docs/${config.docId}/tables/${config.tableId}/records`;
 
             loadingStatus.textContent = 'Loading data...';
             tableBody.innerHTML = '';
@@ -334,7 +335,7 @@
             populateImageDropdown(document.getElementById('imageSelect'));
 
             try {
-                const response = await fetch(url);
+                const response = await fetch(`${apiConfig.baseUrl}/food`);
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
                 const data = await response.json();
                 
@@ -353,7 +354,9 @@
                     const insertionDate = fields.Insertion ? new Date(fields.Insertion * 1000).toLocaleDateString() : 'N/A';
                     const expirationDate = fields.Expiration ? new Date(fields.Expiration * 1000).toLocaleDateString() : 'N/A';
                     const locationName = locationsData.find(loc => loc.id === fields.Location)?.fields.Name || 'N/A';
-                    const imageUrl = fields.Image ? `${config.baseUrl}/api/docs/${config.docId}/attachments/${fields.Image}/download` : null;
+                    
+                    // Construct image URL using the public Grist info
+                    const imageUrl = fields.Image ? `${gristConfig.baseUrl}/api/docs/${gristConfig.docId}/attachments/${fields.Image}/download` : null;
 
                     row.innerHTML = `
                         <td class="whitespace-nowrap">${fields.Name || 'N/A'}</td>
@@ -421,12 +424,11 @@
                 Image: imageId ? [imageId] : null
             };
 
-            const url = `${config.baseUrl}/api/docs/${config.docId}/tables/${config.tableId}/records`;
             try {
-                const response = await fetch(url, {
+                const response = await fetch(`${apiConfig.baseUrl}/food`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ records: [{ fields: newItem }] })
+                    body: JSON.stringify(newItem) // Send only the fields object
                 });
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
                 document.getElementById('addItemForm').reset();
@@ -585,12 +587,11 @@
             }
             updatedFields.Location = [locationId];
 
-            const url = `${config.baseUrl}/api/docs/${config.docId}/tables/${config.tableId}/records`;
             try {
-                const response = await fetch(url, {
+                const response = await fetch(`${apiConfig.baseUrl}/food/${rowId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ records: [{ id: rowId, fields: updatedFields }] })
+                    body: JSON.stringify(updatedFields) // Send only the fields object
                 });
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
                 fetchData();
@@ -602,12 +603,9 @@
 
         async function deleteItem(row) {
             const rowId = row.dataset.rowId;
-            const url = `${config.baseUrl}/api/docs/${config.docId}/tables/${config.tableId}/records`;
             try {
-                const response = await fetch(url, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ids: [rowId] })
+                const response = await fetch(`${apiConfig.baseUrl}/food/${rowId}`, {
+                    method: 'DELETE' // No body is needed
                 });
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
                 fetchData();
