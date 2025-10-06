@@ -95,7 +95,7 @@
         let locationIdInput = document.getElementById('locationId');
         
         const config = {
-            baseUrl: 'http://localhost:3001',
+            backendUrl: 'http://localhost:3001',
             gristImageUrlBase: 'https://grist.home.jjluk.net', // Your Grist instance URL
             docId: '3bkG8senLEgK8n7df8U9vW', // Your Grist Doc ID
         };
@@ -157,7 +157,7 @@
         }
 
         async function fetchApi(endpoint) {
-            const response = await fetch(`${config.baseUrl}${endpoint}`);
+            const response = await fetch(`${config.backendUrl}${endpoint}`);
             if (!response.ok) {
                 const errorBody = await response.text();
                 throw new Error(`HTTP error! Status: ${response.status} on ${endpoint} - ${errorBody}`);
@@ -222,7 +222,7 @@
         
         async function createNewLocation(locationName) {
             try {
-                const response = await fetch(`${config.baseUrl}/locations`, {
+                const response = await fetch(`${config.backendUrl}/locations`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ Name: locationName })
@@ -241,7 +241,7 @@
             const formData = new FormData();
             formData.append('file', file);
             try {
-                const response = await fetch(`${config.baseUrl}/attachments`, { method: 'POST', body: formData });
+                const response = await fetch(`${config.backendUrl}/attachments`, { method: 'POST', body: formData });
                 if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
                 const data = await response.json();
                 return data[0];
@@ -339,7 +339,7 @@
             };
 
             try {
-                const response = await fetch(`${config.baseUrl}/food`, {
+                const response = await fetch(`${config.backendUrl}/food`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newItem)
@@ -478,7 +478,7 @@
             };
 
             try {
-                const response = await fetch(`${config.baseUrl}/food/${rowId}`, {
+                const response = await fetch(`${config.backendUrl}/food/${rowId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updatedFields)
@@ -496,7 +496,7 @@
         async function deleteItem(row) {
             const rowId = row.dataset.rowId;
             try {
-                const response = await fetch(`${config.baseUrl}/food/${rowId}`, { method: 'DELETE' });
+                const response = await fetch(`${config.backendUrl}/food/${rowId}`, { method: 'DELETE' });
                 if (!response.ok) {
                     throw new Error(`Server responded with ${response.status}`);
                 }
