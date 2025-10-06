@@ -95,7 +95,7 @@
         let locationIdInput = document.getElementById('locationId');
         
         const config = {
-            backendUrl: `${window.location.protocol}//${window.location.hostname}:3001`,
+            backendUrl: window.location.origin,
             gristImageUrlBase: 'https://grist.home.jjluk.net', // Your Grist instance URL
             docId: '3bkG8senLEgK8n7df8U9vW', // Your Grist Doc ID
         };
