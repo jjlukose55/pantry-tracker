@@ -128,16 +128,21 @@ app.patch("/food/:id", async (req, res) => {
 });
 
 // DELETE /food/:id
-// Input: URL param :id of the food record
-// Body: none
-// Output: JSON confirmation of deletion from Grist
+// Deletes a single food record and cleans up unused attachments
 app.delete("/food/:id", async (req, res) => {
   try {
-    const url = `${gristBaseUrl}/api/docs/${gristDocId}/tables/Food/data/delete`;
-    const body = [parseInt(req.params.id)]; // Grist expects a plain array of IDs
+    const recordId = parseInt(req.params.id);
 
-    const response = await axios.post(url, body, axiosConfig);
-    res.json(response.data); // returns deletion confirmation
+    // 1️⃣ Delete the food record
+    const deleteUrl = `${gristBaseUrl}/api/docs/${gristDocId}/tables/Food/data/delete`;
+    const deleteBody = [recordId]; // Grist expects a plain array of IDs
+    await axios.post(deleteUrl, deleteBody, axiosConfig);
+
+    // 2️⃣ Remove unused attachments
+    const removeUnusedUrl = `${gristBaseUrl}/api/docs/${gristDocId}/attachments/removeUnused`;
+    await axios.post(removeUnusedUrl, '', axiosConfig); // Empty body
+
+    res.json({ success: true, deletedId: recordId, attachmentsCleaned: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
