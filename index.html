@@ -167,6 +167,16 @@
             messageContainer.appendChild(messageBox);
         }
 
+        function formatDateFromTimestamp(timestamp) {
+            if (!timestamp) return 'N/A';
+            const d = new Date(timestamp * 1000);
+            // Use UTC date parts to construct the date string, avoiding timezone shifts.
+            const year = d.getUTCFullYear();
+            const month = d.getUTCMonth() + 1; // getUTCMonth is 0-indexed
+            const day = d.getUTCDate();
+            return `${month}/${day}/${year}`;
+        }
+
         function convertDateToISO(dateString) {
             if (!dateString || dateString === 'N/A') return '';
             const parts = dateString.split('/');
@@ -294,8 +304,8 @@
                 row.dataset.locationId = fields.Location;
                 row.dataset.imageId = fields.Image ? fields.Image[1] : '';
 
-                const insertionDate = fields.Insertion ? new Date(fields.Insertion * 1000).toLocaleDateString() : 'N/A';
-                const expirationDate = fields.Expiration ? new Date(fields.Expiration * 1000).toLocaleDateString() : 'N/A';
+                const insertionDate = formatDateFromTimestamp(fields.Insertion);
+                const expirationDate = formatDateFromTimestamp(fields.Expiration);
                 const locationName = locationsData.find(loc => loc.id === fields.Location)?.fields.Name || 'N/A';
                 const imageId = fields.Image ? fields.Image[1] : null;
                 const imageUrl = imageId ? `${config.gristImageUrlBase}/api/docs/${config.docId}/attachments/${imageId}/download` : null;
@@ -308,9 +318,11 @@
                     <td>${insertionDate}</td>
                     <td>${expirationDate}</td>
                     <td>${imageUrl ? `<a href="${imageUrl}" target="_blank" class="text-blue-500 hover:underline">View Image</a>` : 'N/A'}</td>
-                    <td class="flex space-x-2">
-                        <button class="edit-btn text-white py-1 px-3 rounded-lg text-sm">Edit</button>
-                        <button class="delete-btn text-white py-1 px-3 rounded-lg text-sm">Delete</button>
+                    <td>
+                        <div class="flex space-x-2">
+                            <button class="edit-btn text-white py-1 px-3 rounded-lg text-sm">Edit</button>
+                            <button class="delete-btn text-white py-1 px-3 rounded-lg text-sm">Delete</button>
+                        </div>
                     </td>
                 `;
             });
@@ -386,8 +398,12 @@
 
                 document.getElementById('addItemForm').reset();
                 locationIdInput.value = '';
-                // Reset insertion date to today after successful submission
-                document.getElementById('insertion').value = new Date().toISOString().split('T')[0];
+                // Reset insertion date and calculate new expiration date after successful submission
+                const today = new Date();
+                document.getElementById('insertion').value = today.toISOString().split('T')[0];
+                const weekFromToday = new Date(today.setDate(today.getDate() + 7));
+                document.getElementById('expiration').value = weekFromToday.toISOString().split('T')[0];
+
                 await fetchData();
             } catch (error) {
                 console.error('Error adding item:', error);
@@ -474,8 +490,10 @@
 
             // Action Buttons
             cells[7].innerHTML = `
-                <button class="save-btn text-white py-1 px-3 rounded-lg text-sm">Save</button>
-                <button class="cancel-btn text-white py-1 px-3 rounded-lg text-sm">Cancel</button>
+                <div class="flex space-x-2">
+                    <button class="save-btn text-white py-1 px-3 rounded-lg text-sm">Save</button>
+                    <button class="cancel-btn text-white py-1 px-3 rounded-lg text-sm">Cancel</button>
+                </div>
             `;
         }
         
@@ -544,8 +562,32 @@
             }
         }
 
+        document.getElementById('insertion').addEventListener('input', (e) => {
+            try {
+                const insertionDateValue = e.target.value;
+                if (insertionDateValue) {
+                    // Create date object correctly accounting for timezone by splitting the string
+                    const parts = insertionDateValue.split('-');
+                    const year = parseInt(parts[0], 10);
+                    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+                    const day = parseInt(parts[2], 10);
+                    
+                    const insertionDate = new Date(year, month, day);
+                    const expirationDate = new Date(insertionDate.setDate(insertionDate.getDate() + 7));
+                    document.getElementById('expiration').value = expirationDate.toISOString().split('T')[0];
+                }
+            } catch (error) {
+                console.error("Could not parse date:", error);
+                // Optionally clear the expiration date if insertion date is invalid
+                document.getElementById('expiration').value = '';
+            }
+        });
+
         window.onload = () => {
-            document.getElementById('insertion').value = new Date().toISOString().split('T')[0];
+            const today = new Date();
+            document.getElementById('insertion').value = today.toISOString().split('T')[0];
+            const weekFromToday = new Date(today.setDate(today.getDate() + 7));
+            document.getElementById('expiration').value = weekFromToday.toISOString().split('T')[0];
             fetchData();
         };
     </script>
