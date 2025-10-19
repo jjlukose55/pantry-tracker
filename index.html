@@ -45,17 +45,15 @@
             </div>
             <div class="form-field">
                 <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-                <input type="number" id="quantity" placeholder="e.g., 5" min="1" required class="p-2">
+                <input type="number" id="quantity" placeholder="e.g., 1" min="1" required class="p-2">
             </div>
             <div class="form-field">
                 <label for="owner" class="block text-sm font-medium text-gray-700 mb-1">Owner</label>
                 <input type="text" id="owner" placeholder="e.g., Justin" required class="p-2">
             </div>
-            <div class="form-field relative">
-                <label for="locationName" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                <input type="text" id="locationName" placeholder="e.g., Fridge" required class="p-2 w-full">
-                <input type="hidden" id="locationId">
-                <div id="locationDropdown" class="dropdown-list hidden"></div>
+            <div class="form-field">
+                <label for="locationSelect" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <select id="locationSelect" required class="p-2 w-full"></select>
             </div>
             <div class="form-field">
                 <label for="insertion" class="block text-sm font-medium text-gray-700 mb-1">Insertion Date</label>
@@ -108,9 +106,6 @@
         let locationsData = [];
         let attachmentsData = [];
         let allFoodData = []; // Store the full list of food items
-        let locationDropdown = document.getElementById('locationDropdown');
-        let locationInput = document.getElementById('locationName');
-        let locationIdInput = document.getElementById('locationId');
         
         const config = {
             backendUrl: window.location.origin,
@@ -170,9 +165,8 @@
         function formatDateFromTimestamp(timestamp) {
             if (!timestamp) return 'N/A';
             const d = new Date(timestamp * 1000);
-            // Use UTC date parts to construct the date string, avoiding timezone shifts.
             const year = d.getUTCFullYear();
-            const month = d.getUTCMonth() + 1; // getUTCMonth is 0-indexed
+            const month = d.getUTCMonth() + 1;
             const day = d.getUTCDate();
             return `${month}/${day}/${year}`;
         }
@@ -180,7 +174,6 @@
         function convertDateToISO(dateString) {
             if (!dateString || dateString === 'N/A') return '';
             const parts = dateString.split('/');
-            // Handles both MM/DD/YYYY and M/D/YYYY
             return parts.length === 3 ? `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}` : '';
         }
 
@@ -224,30 +217,20 @@
             });
         }
         
-        locationInput.addEventListener('input', () => {
-            const searchTerm = locationInput.value.toLowerCase();
-            const filteredLocations = locationsData.filter(loc => loc.fields.Name.toLowerCase().includes(searchTerm));
-            locationDropdown.innerHTML = '';
-            locationDropdown.classList.toggle('hidden', filteredLocations.length === 0);
-            filteredLocations.forEach(loc => {
-                const item = document.createElement('div');
-                item.className = 'dropdown-item';
-                item.textContent = loc.fields.Name;
-                item.onclick = () => {
-                    locationInput.value = loc.fields.Name;
-                    locationIdInput.value = loc.id;
-                    locationDropdown.classList.add('hidden');
-                };
-                locationDropdown.appendChild(item);
+        function populateLocationsDropdown(selectElement, selectedId = null) {
+            selectElement.innerHTML = '<option value="" disabled selected>-- Select Location --</option>';
+            locationsData.forEach(loc => {
+                const option = document.createElement('option');
+                option.value = loc.id;
+                option.textContent = loc.fields.Name;
+                if (selectedId && loc.id == selectedId) {
+                    option.selected = true;
+                }
+                selectElement.appendChild(option);
             });
-        });
+            selectElement.innerHTML += '<option value="new" class="font-bold text-blue-600">-- Add New Location --</option>';
+        }
 
-        document.addEventListener('click', (e) => {
-            if (!locationInput.contains(e.target) && !locationDropdown.contains(e.target)) {
-                locationDropdown.classList.add('hidden');
-            }
-        });
-        
         async function createNewLocation(locationName) {
             try {
                 const response = await fetch(`${config.backendUrl}/locations`, {
@@ -335,6 +318,8 @@
             try {
                 await Promise.all([fetchAttachments(), fetchLocations()]);
                 
+                populateLocationsDropdown(document.getElementById('locationSelect'));
+                
                 const data = await fetchApi('/food');
                 allFoodData = data.records || [];
                 
@@ -355,12 +340,31 @@
             renderTable(filteredData);
         });
 
+        document.getElementById('locationSelect').addEventListener('change', async (e) => {
+            if (e.target.value === 'new') {
+                const newLocationName = prompt('Enter the name for the new location:');
+                if (newLocationName && newLocationName.trim() !== '') {
+                    const newLocationId = await createNewLocation(newLocationName.trim());
+                    if (newLocationId) {
+                        await fetchLocations(); // Refresh the list
+                        populateLocationsDropdown(e.target, newLocationId); // Repopulate and select the new one
+                    }
+                } else {
+                    e.target.value = ""; // Reset dropdown if prompt is cancelled or empty
+                }
+            }
+        });
+
         document.getElementById('addItemForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const locationName = locationInput.value.trim();
-            let location = locationsData.find(loc => loc.fields.Name.toLowerCase() === locationName.toLowerCase());
-            let locationId = location ? location.id : await createNewLocation(locationName);
-            if (!locationId) return;
+            const locationId = document.getElementById('locationSelect').value;
+            if (!locationId || locationId === 'new') {
+                showMessage("Please select a valid location.");
+                return;
+            }
+            
+            const ownerName = document.getElementById('owner').value;
+            localStorage.setItem('lastOwnerName', ownerName);
 
             const imageUploadInput = document.getElementById('imageUpload');
             let imageId = null;
@@ -378,8 +382,8 @@
             const newItem = {
                 Name: document.getElementById('name').value,
                 Quantity: parseInt(document.getElementById('quantity').value, 10),
-                Owner: document.getElementById('owner').value,
-                Location: locationId,
+                Owner: ownerName,
+                Location: parseInt(locationId, 10),
                 Insertion: document.getElementById('insertion').value,
                 Expiration: document.getElementById('expiration').value,
                 Image: imageId ? ["L", imageId] : null
@@ -397,12 +401,14 @@
                 }
 
                 document.getElementById('addItemForm').reset();
-                locationIdInput.value = '';
-                // Reset insertion date and calculate new expiration date after successful submission
+                
                 const today = new Date();
                 document.getElementById('insertion').value = today.toISOString().split('T')[0];
-                const weekFromToday = new Date(today.setDate(today.getDate() + 7));
+                const weekFromToday = new Date(new Date().setDate(today.getDate() + 7));
                 document.getElementById('expiration').value = weekFromToday.toISOString().split('T')[0];
+                document.getElementById('quantity').value = 1;
+                document.getElementById('owner').value = localStorage.getItem('lastOwnerName') || '';
+
 
                 await fetchData();
             } catch (error) {
@@ -423,7 +429,6 @@
         function makeRowEditable(row) {
             const cells = Array.from(row.cells);
 
-            // Text and Number Inputs
             [0, 1, 2].forEach(i => {
                 const input = document.createElement('input');
                 input.type = i === 1 ? 'number' : 'text';
@@ -433,7 +438,6 @@
                 cells[i].appendChild(input);
             });
 
-            // Date Inputs
             [4, 5].forEach(i => {
                 const input = document.createElement('input');
                 input.type = 'date';
@@ -443,39 +447,30 @@
                 cells[i].appendChild(input);
             });
 
-            // Location Input with Dropdown
             const locationCell = cells[3];
-            const originalLocationName = locationCell.textContent.trim();
+            const originalLocationId = row.dataset.locationId;
             locationCell.innerHTML = '';
-            const locationWrapper = document.createElement('div');
-            locationWrapper.className = 'relative';
-            const locationEditInput = document.createElement('input');
-            locationEditInput.type = 'text';
-            locationEditInput.value = originalLocationName;
-            locationEditInput.className = 'p-2 rounded-lg border w-full';
-            const locationEditDropdown = document.createElement('div');
-            locationEditDropdown.className = 'dropdown-list hidden';
-            locationWrapper.append(locationEditInput, locationEditDropdown);
-            locationCell.appendChild(locationWrapper);
-
-            locationEditInput.addEventListener('input', () => {
-                const searchTerm = locationEditInput.value.toLowerCase();
-                const filtered = locationsData.filter(loc => loc.fields.Name.toLowerCase().includes(searchTerm));
-                locationEditDropdown.innerHTML = '';
-                locationEditDropdown.classList.toggle('hidden', filtered.length === 0);
-                filtered.forEach(loc => {
-                    const item = document.createElement('div');
-                    item.className = 'dropdown-item';
-                    item.textContent = loc.fields.Name;
-                    item.onclick = () => {
-                        locationEditInput.value = loc.fields.Name;
-                        locationEditDropdown.classList.add('hidden');
-                    };
-                    locationEditDropdown.appendChild(item);
-                });
+            const locationSelect = document.createElement('select');
+            locationSelect.className = 'p-2 w-full border-gray-300 rounded-lg';
+            populateLocationsDropdown(locationSelect, originalLocationId);
+            locationCell.appendChild(locationSelect);
+            
+            locationSelect.addEventListener('change', async (e) => {
+                if (e.target.value === 'new') {
+                    const newLocationName = prompt('Enter the name for the new location:');
+                    if (newLocationName && newLocationName.trim() !== '') {
+                        const newLocationId = await createNewLocation(newLocationName.trim());
+                        if (newLocationId) {
+                            await fetchLocations();
+                            populateLocationsDropdown(locationSelect, newLocationId);
+                        }
+                    } else {
+                        locationSelect.value = originalLocationId || "";
+                    }
+                }
             });
 
-            // Image Input
+
             const imageCell = cells[6];
             const originalImageId = row.dataset.imageId;
             imageCell.innerHTML = '';
@@ -488,7 +483,6 @@
             fileInput.className = 'p-2 w-full border-gray-300 rounded-lg';
             imageCell.append(select, fileInput);
 
-            // Action Buttons
             cells[7].innerHTML = `
                 <div class="flex space-x-2">
                     <button class="save-btn text-white py-1 px-3 rounded-lg text-sm">Save</button>
@@ -517,16 +511,17 @@
                 imageId = parseInt(imageSelectInput.value, 10);
             }
             
-            const locationName = cells[3].querySelector('input').value.trim();
-            const location = locationsData.find(l => l.fields.Name.toLowerCase() === locationName.toLowerCase());
-            const locationId = location ? location.id : await createNewLocation(locationName);
-            if (!locationId) return;
+            const locationId = cells[3].querySelector('select').value;
+             if (!locationId || locationId === 'new') {
+                showMessage("Please select a valid location for the update.");
+                return;
+            }
 
             const updatedFields = {
                 Name: cells[0].querySelector('input').value,
                 Quantity: parseInt(cells[1].querySelector('input').value, 10),
                 Owner: cells[2].querySelector('input').value,
-                Location: locationId,
+                Location: parseInt(locationId, 10),
                 Insertion: cells[4].querySelector('input').value,
                 Expiration: cells[5].querySelector('input').value,
                 Image: imageId ? ["L", imageId] : null
@@ -566,10 +561,9 @@
             try {
                 const insertionDateValue = e.target.value;
                 if (insertionDateValue) {
-                    // Create date object correctly accounting for timezone by splitting the string
                     const parts = insertionDateValue.split('-');
                     const year = parseInt(parts[0], 10);
-                    const month = parseInt(parts[1], 10) - 1; // Month is 0-indexed
+                    const month = parseInt(parts[1], 10) - 1;
                     const day = parseInt(parts[2], 10);
                     
                     const insertionDate = new Date(year, month, day);
@@ -578,7 +572,6 @@
                 }
             } catch (error) {
                 console.error("Could not parse date:", error);
-                // Optionally clear the expiration date if insertion date is invalid
                 document.getElementById('expiration').value = '';
             }
         });
@@ -586,8 +579,12 @@
         window.onload = () => {
             const today = new Date();
             document.getElementById('insertion').value = today.toISOString().split('T')[0];
-            const weekFromToday = new Date(today.setDate(today.getDate() + 7));
+            const weekFromToday = new Date(new Date().setDate(today.getDate() + 7));
             document.getElementById('expiration').value = weekFromToday.toISOString().split('T')[0];
+            
+            document.getElementById('quantity').value = 1;
+            document.getElementById('owner').value = localStorage.getItem('lastOwnerName') || '';
+
             fetchData();
         };
     </script>
