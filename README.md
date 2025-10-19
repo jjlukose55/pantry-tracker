@@ -53,10 +53,13 @@ Prerequistes:
 Configure Grist Document with the following structure:
 
 ```
-Document
--- Tables:
--- Locations
+Document:
+PantryTracker
+-- Pages:
 -- Food
+-- -- Tables:
+-- -- Locations
+-- -- Food
 ```
 
 Set Env Variables:
