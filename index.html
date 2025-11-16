@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Grist Food Tracker</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
@@ -27,6 +28,11 @@
         .dropdown-item { padding: 8px 12px; cursor: pointer; }
         .dropdown-item:hover { background-color: #f3f4f6; }
         .form-field { display: flex; flex-direction: column; }
+        #chat-container { border: 1px solid #d1d5db; border-radius: 8px; padding: 1rem; }
+        #chat-messages { height: 200px; overflow-y: auto; margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        .chat-bubble { padding: 0.5rem 1rem; border-radius: 1rem; max-width: 80%; }
+        .user-bubble { background-color: #3b82f6; color: white; align-self: flex-end; }
+        .ai-bubble { background-color: #e5e7eb; color: #1f2937; align-self: flex-start; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-900">
@@ -34,83 +40,140 @@
         <h1 class="text-4xl font-bold text-center mb-2">Grist Food Tracker 🍎</h1>
         <p class="text-center text-gray-600 mb-6">A simple app to track food items at home.</p>
 
+        <!-- === TAB NAVIGATION === -->
+        <div class="mb-6 border-b border-gray-200">
+            <nav class="flex -mb-px space-x-8" aria-label="Tabs">
+                <!-- Tab 1: Add Item (Default Active) -->
+                <button class="tab-btn flex-1 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-indigo-500 text-indigo-600" data-page="add">
+                    Add Item
+                </button>
+                <!-- Tab 2: Pantry List -->
+                <button class="tab-btn flex-1 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-page="list">
+                    Pantry List
+                </button>
+                <!-- Tab 3: Pantry Assistant -->
+                <button class="tab-btn flex-1 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" data-page="chat">
+                    Pantry Assistant
+                </button>
+            </nav>
+        </div>
+        <!-- === END TAB NAVIGATION === -->
+
         <div id="message-container"></div>
-        <hr class="my-6">
-
-        <h2 class="text-2xl font-bold text-center mb-4">Add New Item</h2>
-        <form id="addItemForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <div class="form-field">
-                <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-                <input type="text" id="name" placeholder="e.g., Apples" required class="p-2">
-            </div>
-            <div class="form-field">
-                <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-                <input type="number" id="quantity" placeholder="e.g., 1" min="1" required class="p-2">
-            </div>
-            <div class="form-field">
-                <label for="owner" class="block text-sm font-medium text-gray-700 mb-1">Owner</label>
-                <input type="text" id="owner" placeholder="e.g., Justin" required class="p-2">
-            </div>
-            <div class="form-field">
-                <label for="locationSelect" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                <select id="locationSelect" required class="p-2 w-full"></select>
-            </div>
-            <div class="form-field">
-                <label for="insertion" class="block text-sm font-medium text-gray-700 mb-1">Insertion Date</label>
-                <input type="date" id="insertion" required class="p-2 w-full">
-            </div>
-            <div class="form-field">
-                <label for="expiration" class="block text-sm font-medium text-gray-700 mb-1">Expiration Date</label>
-                <input type="date" id="expiration" required class="p-2 w-full">
-            </div>
-            <div class="form-field lg:col-span-2">
-                <label for="imageUpload" class="block text-sm font-medium text-gray-700 mb-1">Take Item Photo</label>
-                <input type="file" id="imageUpload" accept="image/*" capture="environment" class="p-2 w-full border-gray-300 rounded-lg">
-            </div>
-            <button type="submit" class="lg:col-span-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4">Add Item</button>
-        </form>
-
-        <hr class="my-6">
-        <h2 class="text-2xl font-bold text-center mb-4">Food Items</h2>
         
-        <div class="mb-4">
-            <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-1">Search by Name</label>
-            <input type="text" id="searchInput" placeholder="Search..." class="p-2 w-full border-gray-300 rounded-lg">
-        </div>
+        <!-- === PAGE 1: ADD ITEM (Visible by default) === -->
+        <div id="page-add" class="page-content">
+            <h2 class="text-2xl font-bold text-center mb-4">Add New Item</h2>
+            <form id="addItemForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                
+                <!-- === AI TOGGLE === -->
+                <div class="form-field lg:col-span-4 flex flex-row items-center justify-between py-2">
+                    <label for="aiToggle" class="block text-sm font-medium text-gray-700">Enable AI Recognition</label>
+                    <button type="button" id="aiToggleBtn" class="bg-gray-200 relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" role="switch" aria-checked="false">
+                        <span class="sr-only">Enable AI Recognition</span>
+                        <input type="checkbox" id="aiToggle" class="hidden"> <!-- Off by default -->
+                        <span id="aiToggleHandle" aria-hidden="true" class="translate-x-0 pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                    </button>
+                </div>
 
-        <div class="flex justify-center mb-4">
-            <button onclick="fetchData()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4">Refresh Data</button>
+                <!-- === IMAGE UPLOAD FIELD === -->
+                <div class="form-field lg:col-span-4">
+                    <label for="imageUpload" class="block text-sm font-medium text-gray-700 mb-1">Take Item Photo</label>
+                    <!-- No longer disabled -->
+                    <input type="file" id="imageUpload" accept="image/*" capture="environment" class="p-2 w-full border-gray-300 rounded-lg">
+                    <p id="ai-status" class="text-xs text-gray-500 h-4"></p>
+                </div>
+
+                <div class="form-field">
+                    <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input type="text" id="name" placeholder="e.g., Apples" required class="p-2">
+                </div>
+                <div class="form-field">
+                    <label for="quantity" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                    <input type="number" id="quantity" placeholder="e.g., 1" min="1" required class="p-2">
+                </div>
+                <div class="form-field">
+                    <label for="owner" class="block text-sm font-medium text-gray-700 mb-1">Owner</label>
+                    <input type="text" id="owner" placeholder="e.g., Justin" required class="p-2">
+                </div>
+                <div class="form-field">
+                    <label for="locationSelect" class="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                    <select id="locationSelect" required class="p-2 w-full"></select>
+                </div>
+                <div class="form-field">
+                    <label for="insertion" class="block text-sm font-medium text-gray-700 mb-1">Insertion Date</label>
+                    <input type="date" id="insertion" required class="p-2 w-full">
+                </div>
+                <div class="form-field">
+                    <label for="expiration" class="block text-sm font-medium text-gray-700 mb-1">Expiration Date</label>
+                    <input type="date" id="expiration" required class="p-2 w-full">
+                </div>
+                <button type="submit" class="lg:col-span-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 mt-4">Add Item</button>
+            </form>
         </div>
-        <div id="data-table-container" class="overflow-x-auto">
-            <p id="loading-status" class="text-center text-gray-500">Loading data...</p>
-            <table id="food-table" class="w-full">
-                <thead>
-                    <tr>
-                        <th class="text-left">Name</th>
-                        <th class="text-left">Quantity</th>
-                        <th class="text-left">Owner</th>
-                        <th class="text-left">Location</th>
-                        <th class="text-left">Insertion</th>
-                        <th class="text-left">Expiration</th>
-                        <th class="text-left">Image</th>
-                        <th class="text-left">Actions</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+        <!-- === END PAGE 1 === -->
+
+
+        <!-- === PAGE 2: PANTRY LIST (Hidden by default) === -->
+        <div id="page-list" class="page-content hidden">
+            <hr class="my-6">
+            <h2 class="text-2xl font-bold text-center mb-4">Food Items</h2>
+            
+            <div class="mb-4">
+                <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-1">Search by Name</label>
+                <input type="text" id="searchInput" placeholder="Search..." class="p-2 w-full border-gray-300 rounded-lg">
+            </div>
+
+            <div class="flex justify-center mb-4">
+                <button onclick="fetchData()" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-2 px-4">Refresh Data</button>
+            </div>
+            <div id="data-table-container" class="overflow-x-auto">
+                <p id="loading-status" class="text-center text-gray-500">Loading data...</p>
+                <table id="food-table" class="w-full">
+                    <thead>
+                        <tr>
+                            <th class="text-left">Name</th>
+                            <th class="text-left">Quantity</th>
+                            <th class="text-left">Owner</th>
+                            <th class="text-left">Location</th>
+                            <th class="text-left">Insertion</th>
+                            <th class="text-left">Expiration</th>
+                            <th class="text-left">Image</th>
+                            <th class="text-left">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
         </div>
+        <!-- === END PAGE 2 === -->
+
+        <!-- === PAGE 3: CHAT (Hidden by default) === -->
+        <div id="page-chat" class="page-content hidden">
+            <hr class="my-10">
+            <h2 class="text-2xl font-bold text-center mb-4">Pantry Assistant 🤖</h2>
+            <div id="chat-container">
+                <div id="chat-messages"></div>
+                <form id="chat-form" class="flex gap-2">
+                    <input type="text" id="chat-input" class="p-2 w-full" placeholder="Ask about your pantry..." required>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4">Send</button>
+                </form>
+            </div>
+        </div>
+        <!-- === END PAGE 3 === -->
+
     </div>
 
     <script>
         const messageContainer = document.getElementById('message-container');
         let locationsData = [];
         let attachmentsData = [];
-        let allFoodData = []; // Store the full list of food items
+        let allFoodData = [];
         
         const config = {
             backendUrl: window.location.origin,
-            gristImageUrlBase: 'https://grist.home.jjluk.net', // Your Grist instance URL
-            docId: '3bkG8senLEgK8n7df8U9vW', // Your Grist Doc ID
+            gristImageUrlBase: 'https://grist.home.jjluk.net',
+            docId: '3bkG8senLEgK8n7df8U9vW',
         };
         
         function showMessage(message) {
@@ -177,13 +240,20 @@
             return parts.length === 3 ? `${parts[2]}-${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}` : '';
         }
 
-        async function fetchApi(endpoint) {
-            const response = await fetch(`${config.backendUrl}${endpoint}`);
+        async function fetchApi(endpoint, options = {}) {
+            const response = await fetch(`${config.backendUrl}/api${endpoint}`, options);
             if (!response.ok) {
                 const errorBody = await response.text();
-                throw new Error(`HTTP error! Status: ${response.status} on ${endpoint} - ${errorBody}`);
+                const error = new Error(`HTTP error! Status: ${response.status} on ${endpoint}. Response: ${errorBody}`);
+                error.response = response;
+                throw error;
             }
-            return response.json();
+            // For multipart form data, the response might not be JSON
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+                return response.json();
+            }
+            return response.text();
         }
 
         async function fetchLocations() {
@@ -191,8 +261,8 @@
                 const data = await fetchApi('/locations');
                 locationsData = data.records;
             } catch (error) {
-                console.error('Error fetching locations:', error);
-                showMessage(`Failed to load locations: ${error.message}`);
+                console.error(`API Error in fetchLocations:`, error.message);
+                showMessage(`Failed to load locations. Check console for details.`);
             }
         }
 
@@ -201,8 +271,8 @@
                 const data = await fetchApi('/attachments');
                 attachmentsData = data.records;
             } catch (error) {
-                console.error('Error fetching attachments:', error);
-                showMessage(`Failed to load image library: ${error.message}`);
+                console.error(`API Error in fetchAttachments:`, error.message);
+                showMessage(`Failed to load image library. Check console for details.`);
             }
         }
         
@@ -218,7 +288,7 @@
         }
         
         function populateLocationsDropdown(selectElement, selectedId = null) {
-            selectElement.innerHTML = '<option value="" disabled selected>-- Select Location --</option>';
+            selectElement.innerHTML = '<option value="" disabled>-- Select Location --</option>';
             locationsData.forEach(loc => {
                 const option = document.createElement('option');
                 option.value = loc.id;
@@ -228,22 +298,23 @@
                 }
                 selectElement.appendChild(option);
             });
+            if (locationsData.length > 0 && !selectedId) {
+                selectElement.value = "";
+            }
             selectElement.innerHTML += '<option value="new" class="font-bold text-blue-600">-- Add New Location --</option>';
         }
 
         async function createNewLocation(locationName) {
             try {
-                const response = await fetch(`${config.backendUrl}/locations`, {
+                const data = await fetchApi('/locations', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ Name: locationName })
                 });
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
-                const data = await response.json();
                 return data.records[0].id; 
             } catch (error) {
-                console.error('Error creating new location:', error);
-                showMessage(`Failed to create new location: ${error.message}`);
+                console.error(`API Error in createNewLocation:`, error.message);
+                showMessage(`Failed to create new location. Check console for details.`);
                 return null;
             }
         }
@@ -252,13 +323,11 @@
             const formData = new FormData();
             formData.append('file', file);
             try {
-                const response = await fetch(`${config.backendUrl}/attachments`, { method: 'POST', body: formData });
-                if (!response.ok) throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
-                const data = await response.json();
+                const data = await fetchApi('/attachments', { method: 'POST', body: formData });
                 return data[0];
             } catch (error) {
-                console.error('Error uploading file:', error);
-                showMessage(`Failed to upload image: ${error.message}`);
+                console.error(`API Error in uploadAttachment:`, error.message);
+                showMessage(`Failed to upload image. Check console for details.`);
                 return null;
             }
         }
@@ -327,8 +396,8 @@
                 document.getElementById('food-table').style.display = 'table';
 
             } catch (error) {
-                console.error('Error fetching data:', error);
-                loadingStatus.textContent = `Error loading data: ${error.message}`;
+                console.error(`API Error in fetchData:`, error.message);
+                loadingStatus.textContent = `Error loading data. Check console for details.`;
             }
         }
         
@@ -346,15 +415,63 @@
                 if (newLocationName && newLocationName.trim() !== '') {
                     const newLocationId = await createNewLocation(newLocationName.trim());
                     if (newLocationId) {
-                        await fetchLocations(); // Refresh the list
-                        populateLocationsDropdown(e.target, newLocationId); // Repopulate and select the new one
+                        await fetchLocations();
+                        populateLocationsDropdown(e.target, newLocationId);
                     }
                 } else {
-                    e.target.value = ""; // Reset dropdown if prompt is cancelled or empty
+                    e.target.value = "";
                 }
             }
         });
 
+        document.getElementById('imageUpload').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // --- UPDATED LOGIC ---
+            // Only run AI analysis if the toggle is checked
+            const aiToggleCheckbox = document.getElementById('aiToggle');
+            if (!aiToggleCheckbox.checked) return;
+
+            const aiStatus = document.getElementById('ai-status');
+            aiStatus.textContent = 'Analyzing image...';
+
+            const formData = new FormData();
+            formData.append('image', file);
+
+            try {
+                // 'data' is now the *actual* JSON object: { item: "...", ... }
+                // NOT { "result": "..." }
+                const data = await fetchApi('/analyzeImage', {
+                    method: 'POST',
+                    body: formData,
+                });
+                
+                console.log('Parsed JSON from server:', data);
+
+                if (data && data.item) {
+                    document.getElementById('name').value = data.item;
+                    aiStatus.textContent = `✓ Item identified as ${data.item}.`;
+                } else {
+                    aiStatus.textContent = '✓ Could not identify item name.';
+                }
+
+                if (data && data.expiration_days) {
+                    const days = parseInt(data.expiration_days, 10);
+                    const today = new Date();
+                    const expirationDate = new Date(today.setDate(today.getDate() + days));
+                    document.getElementById('expiration').value = expirationDate.toISOString().split('T')[0];
+                } else {
+                    // Handle case where expiration_days might be missing or null
+                    console.log('No expiration days provided by AI.');
+                }
+
+            } catch (error) {
+                console.error(`API Error in analyzeImage:`, error.message);
+                aiStatus.textContent = '✗ Image analysis error.';
+            }
+        });
+        
         document.getElementById('addItemForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const locationId = document.getElementById('locationSelect').value;
@@ -369,6 +486,8 @@
             const imageUploadInput = document.getElementById('imageUpload');
             let imageId = null;
 
+            // --- UPDATED LOGIC ---
+            // Upload the image if one is selected, regardless of the AI toggle.
             if (imageUploadInput.files[0]) {
                 document.getElementById('loading-status').textContent = 'Uploading image...';
                 imageId = await uploadAttachment(imageUploadInput.files[0]);
@@ -390,17 +509,16 @@
             };
 
             try {
-                const response = await fetch(`${config.backendUrl}/food`, {
+                await fetchApi('/food', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(newItem)
                 });
 
-                if (!response.ok) {
-                    throw new Error(`Server responded with ${response.status}`);
-                }
-
                 document.getElementById('addItemForm').reset();
+                document.getElementById('ai-status').textContent = '';
+                // After reset, we must also reset the toggle to its default "off" state
+                setAIToggle(false);
                 
                 const today = new Date();
                 document.getElementById('insertion').value = today.toISOString().split('T')[0];
@@ -409,11 +527,93 @@
                 document.getElementById('quantity').value = 1;
                 document.getElementById('owner').value = localStorage.getItem('lastOwnerName') || '';
 
-
                 await fetchData();
             } catch (error) {
-                console.error('Error adding item:', error);
-                showMessage(`Failed to add item: ${error.message}`);
+                console.error(`API Error in addItemForm submit:`, error.message);
+                showMessage(`Failed to add item. Check console for details.`);
+            }
+        });
+
+        function appendChatMessage(message, sender) {
+            const messagesDiv = document.getElementById('chat-messages');
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${sender === 'user' ? 'user-bubble' : 'ai-bubble'}`;
+            
+            if (sender === 'user') {
+                bubble.textContent = message; // User input is always plain text
+            } else {
+                // Parse AI input as Markdown and add Tailwind's 'prose'
+                // classes for nice formatting of lists, bolding, etc.
+                bubble.innerHTML = marked.parse(message);
+                bubble.classList.add('prose', 'prose-sm', 'max-w-none');
+            }
+            
+            messagesDiv.appendChild(bubble);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        document.getElementById('chat-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const chatInput = document.getElementById('chat-input');
+            const chatButton = document.querySelector('#chat-form button');
+            const messagesDiv = document.getElementById('chat-messages');
+            
+            const message = chatInput.value.trim();
+            if (!message) return;
+
+            appendChatMessage(message, 'user');
+            chatInput.value = '';
+            chatButton.disabled = true; // Disable send button
+
+            // Append a new 'ai' bubble and hold a reference to it
+            appendChatMessage('Thinking...', 'ai');
+            const aiBubble = messagesDiv.querySelector('.ai-bubble:last-child');
+
+            try {
+                const itemsForApi = allFoodData.map(record => record.fields);
+
+                // We use fetch() directly to read the stream
+                const response = await fetch(`${config.backendUrl}/api/pantryChat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        items: itemsForApi,
+                        message: message
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || `HTTP error! status: ${response.status}`);
+                }
+
+                // --- UPDATED Stream Handling ---
+                aiBubble.textContent = ''; // Clear "Thinking..."
+                let rawMarkdown = ''; // Store the raw markdown string
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break; // Stream finished
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    rawMarkdown += chunk; // Append raw text
+                    
+                    // Re-parse the entire markdown string on each chunk
+                    aiBubble.innerHTML = marked.parse(rawMarkdown); 
+                    messagesDiv.scrollTop = messagesDiv.scrollHeight; // Auto-scroll
+                }
+                // --- End Stream Handling ---
+
+            } catch (error) {
+                console.error("API Error in pantryChat:", error.message);
+                if (aiBubble.textContent === 'Thinking...' || aiBubble.textContent === '') {
+                    // Use textContent for errors, no need to parse
+                    aiBubble.textContent = 'An error occurred. Please try again.';
+                }
+            } finally {
+                chatButton.disabled = false; // Re-enable send button
             }
         });
 
@@ -469,7 +669,6 @@
                     }
                 }
             });
-
 
             const imageCell = cells[6];
             const originalImageId = row.dataset.imageId;
@@ -528,32 +727,33 @@
             };
 
             try {
-                const response = await fetch(`${config.backendUrl}/food/${rowId}`, {
+                await fetchApi(`/food/${rowId}`, {
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(updatedFields)
                 });
-                 if (!response.ok) {
-                    throw new Error(`Server responded with ${response.status}`);
-                }
                 await fetchData();
             } catch (error) {
-                console.error('Error updating item:', error);
-                showMessage(`Failed to update item: ${error.message}`);
+                console.error(`API Error in updateItem:`, error.message);
+                showMessage(`Failed to update item. Check console for details.`);
             }
         }
 
         async function deleteItem(row) {
             const rowId = row.dataset.rowId;
             try {
-                const response = await fetch(`${config.backendUrl}/food/${rowId}`, { method: 'DELETE' });
-                if (!response.ok) {
-                    throw new Error(`Server responded with ${response.status}`);
-                }
+                // Use default axios config for this one, as it sends JSON
+                await fetchApi(`/food/${rowId}`, { method: 'DELETE' });
                 await fetchData();
             } catch (error) {
-                console.error('Error deleting item:', error);
-                showMessage(`Failed to delete item: ${error.message}`);
+                // Check if the error is the 400 we've been seeing
+                if (error.response && error.response.status === 400) {
+                    console.warn('Delete succeeded but attachment cleanup failed (400). Refreshing data.');
+                    await fetchData(); // Refresh data even if cleanup fails
+                } else {
+                    console.error(`API Error in deleteItem:`, error.message);
+                    showMessage(`Failed to delete item. Check console for details.`);
+                }
             }
         }
 
@@ -567,7 +767,7 @@
                     const day = parseInt(parts[2], 10);
                     
                     const insertionDate = new Date(year, month, day);
-                    const expirationDate = new Date(insertionDate.setDate(insertionDate.getDate() + 7));
+                    const expirationDate = new Date(new Date(insertionDate).setDate(insertionDate.getDate() + 7));
                     document.getElementById('expiration').value = expirationDate.toISOString().split('T')[0];
                 }
             } catch (error) {
@@ -575,6 +775,78 @@
                 document.getElementById('expiration').value = '';
             }
         });
+
+        // --- NEW AI TOGGLE SCRIPT ---
+        const aiToggleBtn = document.getElementById('aiToggleBtn');
+        const aiToggleCheckbox = document.getElementById('aiToggle');
+        const aiToggleHandle = document.getElementById('aiToggleHandle');
+        const aiImageUploadInput = document.getElementById('imageUpload');
+        const aiStatus = document.getElementById('ai-status');
+
+        // Helper function to set toggle state
+        function setAIToggle(isOn) {
+            aiToggleCheckbox.checked = isOn;
+            aiToggleBtn.setAttribute('aria-checked', isOn);
+            if (isOn) {
+                aiToggleBtn.classList.remove('bg-gray-200');
+                aiToggleBtn.classList.add('bg-indigo-600');
+                aiToggleHandle.classList.remove('translate-x-0');
+                aiToggleHandle.classList.add('translate-x-5');
+                // aiImageUploadInput.disabled = false; // No longer disabled
+            } else {
+                aiToggleBtn.classList.add('bg-gray-200');
+                aiToggleBtn.classList.remove('bg-indigo-600');
+                aiToggleHandle.classList.add('translate-x-0');
+                aiToggleHandle.classList.remove('translate-x-5');
+                // aiImageUploadInput.disabled = true; // No longer disabled
+                aiStatus.textContent = ''; // Clear AI status when turning off
+            }
+        }
+
+        aiToggleBtn.addEventListener('click', () => {
+            const isChecked = !aiToggleCheckbox.checked; // Get the new state
+            setAIToggle(isChecked);
+        });
+        // --- END AI TOGGLE SCRIPT ---
+
+
+        // --- TAB NAVIGATION SCRIPT ---
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        const pageContents = document.querySelectorAll('.page-content');
+
+        function showPage(pageId) {
+            // 1. Hide all page containers
+            pageContents.forEach(page => {
+                page.classList.add('hidden');
+            });
+            
+            // 2. Deactivate all tab buttons
+            tabButtons.forEach(btn => {
+                btn.classList.remove('border-indigo-500', 'text-indigo-600');
+                btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            });
+
+            // 3. Show the target page
+            const targetPage = document.getElementById(`page-${pageId}`);
+            if (targetPage) {
+                targetPage.classList.remove('hidden');
+            }
+            
+            // 4. Activate the target tab button
+            const targetTab = document.querySelector(`.tab-btn[data-page="${pageId}"]`);
+            if (targetTab) {
+                targetTab.classList.add('border-indigo-500', 'text-indigo-600');
+                targetTab.classList.remove('border-transparent', 'text-gray-500', 'hover:text-gray-700', 'hover:border-gray-300');
+            }
+        }
+
+        // 5. Attach click listeners to all tab buttons
+        tabButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                showPage(button.dataset.page);
+            });
+        });
+        // --- END TAB LOGIC ---
 
         window.onload = () => {
             const today = new Date();
@@ -586,8 +858,10 @@
             document.getElementById('owner').value = localStorage.getItem('lastOwnerName') || '';
 
             fetchData();
+            
+            // 6. Set the default page to show on load
+            showPage('add'); 
         };
     </script>
 </body>
 </html>
-
