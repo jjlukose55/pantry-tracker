@@ -18,9 +18,7 @@ A simple vibe-coded utility application for tracking stored food. It aims to dim
 
 ## 🧩 Planned Features
 
-- Streamlined uploads of food items
-
-- AI integration for recipe generation
+- Streamline Food Entry
 
 ---
 
@@ -28,7 +26,9 @@ A simple vibe-coded utility application for tracking stored food. It aims to dim
 
 - [x] Fully integrate backend with Grist Spreadsheets
 
-- [ ] Integrate AI Chat
+- [x] Integrate AI Chat
+      
+- [x] Implement Automatic Photo Analysis
 
 ---
 
@@ -65,9 +65,18 @@ PantryTracker
 Set Env Variables:
 
 ```
+# GRIST SECRETS
 GRIST_BASE_URL="<your-grist-url>"
 GRIST_API_KEY="<your-grist-api-key>"
 GRIST_DOC_ID="<your-grist-document-id>"
+
+# AI SECRETS (Depends on [ai-module](https://github.com/jjlukose55/ai-module))
+AI_SERVICE_URL="<ai-microservice-instance>"
+AI_PROVIDER="<"selfhosted" or "openai">"
+AI_API_BASE="<the-ai-host-address>"
+AI_API_KEY="<your-api-key>"
+IMAGE_MODEL="qwen3-vl:2b"
+CHAT_MODEL="qwen3:8b"
 ```
 
 ---
